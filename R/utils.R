@@ -134,10 +134,12 @@ rhsDecomp = function(rhs) {
   ## handle cases where just distribution name is supplied
   ## if function in greta namespace, then assume distr
   notDistrFunctions = c("%*%","eigen","iprobit","ilogit","colMeans","apply","abind","icloglog","icauchit","log1pe","imultilogit")
+  
+  juliaDist = c("Bernoulli")
 
   if (is.symbol(distExpr)) {
     fnName = rlang::as_string(distExpr)
-    if (fnName %in% getNamespaceExports("greta") &
+    if (fnName %in% getNamespaceExports("greta") | fnName %in% juliaDist &
         !(fnName %in% notDistrFunctions)) {
       ## it is a greta distribution - add parantheses so not symbol
       distExpr = rlang::parse_expr(paste0(fnName, "()"))
@@ -165,7 +167,7 @@ rhsDecomp = function(rhs) {
   ## return function name
   if(!oneWordEquation) {fnName = rlang::call_name(distExpr)}
 
-  if (fnName %in% getNamespaceExports("greta") &
+  if (fnName %in% getNamespaceExports("greta") | fnName %in% juliaDist &
       !(fnName %in% notDistrFunctions)) {
     z = rhsDecompDistr(!!distExpr)
   } else {
