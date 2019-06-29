@@ -122,7 +122,7 @@ dag_julia<- function(graph,
       " <- ",
       "as.integer(as.factor(",
       plateDimDF$dataNode,
-      "))   #DIM"
+      "))   #INDEX"
     ),
     sep = "\n")
     ###make labels for dim variables = to label_dim
@@ -144,10 +144,11 @@ dag_julia<- function(graph,
     dplyr::filter(obs == TRUE | !is.na(data)) %>%
     dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
     dplyr::pull(auto_label)
+
   
 
   modelStatement = paste0("julia_command(\"@model julia_model(",
-                          paste0(lhsNodesDF, collapse = ","),
+                          paste0(lhsNodesDF, collapse = ","), if (nrow(plateDimDF)>0) {paste0(AbbrevLabelPad(paste0(plateDimDF$indexLabel, collapse = ",")}, 
                           ") = begin    #MODEL")
   
   ### Prior, Operations, and Likelihood Get Sorted by Topological Order
@@ -240,8 +241,8 @@ dag_julia<- function(graph,
   ###Aggregate all code
   codeStatements = c(dataStatements,
                      plateDataStatements,
-                     dimStatements,
                      modelStatement,
+                     dimStatements,
                      priorOpLikeStatements,
                      callModelStatement,
                      callSamplerStatement,
