@@ -120,9 +120,9 @@ dag_julia<- function(graph,
       abbrevLabelPad(paste0(plateDimDF$indexLabel,
                             "    ")),# four spaces to have invis _dim
       " <- ",
-      "as.factor(",
+      "as.integer(as.factor(",
       plateDimDF$dataNode,
-      ")   #DIM"
+      "))   #DIM"
     ),
     sep = "\n")
     ###make labels for dim variables = to label_dim
@@ -161,7 +161,9 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(distr == TRUE & obs == FALSE) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(auto_label),
-                                  " ~ ", paste0(toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs))))) %>%
+                                    " = Array{Any}(undef,", dimStatements, ")\n",
+                                    abbrevLabelPad(auto_label),
+                                  " ~ ", "[" , paste0(toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs))), "]")) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #PRIOR"))
   
   ###Aggregate Code Statements for PRIOR
