@@ -135,6 +135,18 @@ dag_julia<- function(graph,
     )
   }
   
+  ### Create MODEL Statement
+  # get all non-observed / non-formula nodes by default
+  lhsNodesDF = nodeDF %>%
+    dplyr::filter(obs == TRUE | !is.na(data)) %>%
+    dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
+    dplyr::pull(auto_label)
+  
+
+  modelStatement = paste0("julia_command( \" @model julia_model(",
+                          paste0(lhsNodesDF, collapse = ","),
+                          ") = begin    #MODEL")
+  
   ### Prior, Operations, and Likelihood Get Sorted by Topological Order
   
   ###PRIOR:  Create code for prior lines
@@ -179,7 +191,7 @@ dag_julia<- function(graph,
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,julia_auto_rhs,nodeOrder) %>%
     dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-    toTitleCase(julia_auto_rhs), "[i] \n end \n end;" )) %>%
+    toTitleCase(julia_auto_rhs), "\n end \n end; \" " )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD
@@ -197,23 +209,7 @@ dag_julia<- function(graph,
       dplyr::pull(statement)
   }
   
-  ###Create MODEL Statement
-  # get all non-observed / non-formula nodes by default
-  unobservedNodes = graph$nodes_df %>%
-    dplyr::filter(obs == FALSE & distr == TRUE) %>%
-    dplyr::pull(auto_label)
   
-  #group unobserved nodes by their rhs for later plotting by ggplot
-  #all nodes sharing the same prior will be graphed on the same scale
-  # this code should be moved out of dag_greta at some point
-  priorGroupDF = graph$nodes_df %>%
-    dplyr::filter(obs == FALSE & distr == TRUE) %>%
-    dplyr::mutate(., priorGroup = group_indices(., auto_rhs))
-  assign("priorGroupDF", priorGroupDF, envir = cacheEnv)
-  
-  modelStatement = paste0("gretaModel <- model(",
-                          paste0(unobservedNodes, collapse = ","),
-                          ")   #MODEL")
   
   ###Create POSTERIOR draws statement
   meaningfulLabels(graph)  ###assign meaningful labels in cacheEnv
@@ -228,8 +224,8 @@ dag_julia<- function(graph,
   codeStatements = c(dataStatements,
                      plateDataStatements,
                      dimStatements,
-                     priorOpLikeStatements,
                      modelStatement,
+                     priorOpLikeStatements,
                      posteriorStatement)
   
   #codeStatements
