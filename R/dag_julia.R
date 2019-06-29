@@ -38,6 +38,7 @@
 #' @importFrom igraph graph_from_data_frame topo_sort
 #' @importFrom tidyr gather
 #' @importFrom greta mcmc model as_data
+#' @importFrom tools toTitleCase
 #' @export
 dag_julia<- function(graph,
                       mcmc = FALSE,
@@ -145,7 +146,7 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(distr == TRUE & obs == FALSE) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(auto_label),
-                                  " ~ ", auto_rhs)) %>%
+                                  " ~ ", toTitleCase(auto_rhs))) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #PRIOR"))
   
   ###Aggregate Code Statements for PRIOR
@@ -178,7 +179,7 @@ dag_julia<- function(graph,
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,auto_rhs,nodeOrder) %>%
     dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-    auto_rhs, "[i] \n end \n end;" )) %>%
+    toTitleCase(auto_rhs), "[i] \n end \n end;" )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD
