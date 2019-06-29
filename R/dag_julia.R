@@ -46,7 +46,8 @@ dag_julia<- function(graph,
                       iterations = 4000L,
                       eps = 0.05,
                       tau = 10L,
-                      rate = 0.65) {
+                      rate = 0.65,
+                      ...) {
   
   ###get dimension information
   graph = graph %>% dag_dim()
