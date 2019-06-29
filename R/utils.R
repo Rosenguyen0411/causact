@@ -135,16 +135,16 @@ rhsDecomp = function(rhs) {
   ## if function in greta namespace, then assume distr
   notDistrFunctions = c("%*%","eigen","iprobit","ilogit","colMeans","apply","abind","icloglog","icauchit","log1pe","imultilogit")
   
-  juliaDist = c("Bernoulli", "Beta")
+  #juliaDist = list("Bernoulli", "Beta")
 
   if (is.symbol(distExpr)) {
     fnName = rlang::as_string(distExpr)
-    if ((fnName %in% getNamespaceExports("greta")) | (fnName %in% juliaDist) & !(fnName %in% notDistrFunctions)) {
+    if ((fnName %in% getNamespaceExports("greta"))  & !(fnName %in% notDistrFunctions)) {
       ## it is a greta distribution - add parantheses so not symbol
       distExpr = rlang::parse_expr(paste0(fnName, "()"))
     } else {
       distExpr = rlang::parse_expr(fnName)
-      if (!(fnName %in% getNamespaceExports("greta") &
+      if (!(fnName %in% getNamespaceExports("greta")  &
           !(fnName %in% notDistrFunctions))) {
       oneWordEquation = TRUE } ##expression is not complex
     }
@@ -153,7 +153,7 @@ rhsDecomp = function(rhs) {
   ## handle cases where greta namespace is used
   distString = rlang::expr_text(distExpr)
   if (startsWith(distString,"greta::")) {
-    distString = gsub("greta::","",distString)
+    distString = gsub("F::","",distString)
     distExpr = rlang::parse_expr(distString)
     if(is.symbol(distExpr)) {  ## if now symbol, add parantheses
       distExpr = rlang::parse_expr(paste0(rlang::as_string(distExpr),"()"))
@@ -166,7 +166,7 @@ rhsDecomp = function(rhs) {
   ## return function name
   if(!oneWordEquation) {fnName = rlang::call_name(distExpr)}
 
-  if ((fnName %in% getNamespaceExports("greta")) | (fnName %in% juliaDist) & !(fnName %in% notDistrFunctions)) {
+  if ((fnName %in% getNamespaceExports("greta"))  & !(fnName %in% notDistrFunctions)) {
     z = rhsDecompDistr(!!distExpr)
   } else {
     z = rhsDecompFormula(!!distExpr)
