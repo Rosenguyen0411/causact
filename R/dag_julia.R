@@ -41,7 +41,7 @@
 #' @importFrom tools toTitleCase
 #' @export
 dag_julia<- function(graph,
-                      mcmc = FALSE,
+                      NUTS = FALSE,
                       meaningfulLabels = TRUE,
                       ...) {
   
@@ -177,9 +177,9 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(obs == TRUE) %>%  ##only observed nodes
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
-    dplyr::distinct(id,auto_label,auto_rhs,nodeOrder) %>%
+    dplyr::distinct(id,auto_label,julia_auto_rhs,nodeOrder) %>%
     dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-    toTitleCase(auto_rhs), "[i] \n end \n end;" )) %>%
+    toTitleCase(julia_auto_rhs), "[i] \n end \n end;" )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD
