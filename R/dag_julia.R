@@ -41,7 +41,7 @@
 #' @importFrom tools toTitleCase
 #' @export
 dag_julia<- function(graph,
-                      NUTS = FALSE,
+                      NUTS = TRUE,
                       meaningfulLabels = TRUE,
                       iterations = 4000L,
                       eps = 0.05,
@@ -229,11 +229,13 @@ dag_julia<- function(graph,
     dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
     dplyr::pull(auto_label)
   
-  callModelStatement = paste0("julia_call(\"julia_model\" ",
+  callModelStatement = paste0("julia_call(\"julia_model\", ",
                           paste0(lhsNodesDF, collapse = ","),
                           ")   #CALL MODEL")
   
   
+  callSamplerStatement = paste0(" \"NUTS\", ", iterations, ",", rate,
+                              ")   #CALL SAMPLER")
   
   
   ##########################################
@@ -244,6 +246,7 @@ dag_julia<- function(graph,
                      modelStatement,
                      priorOpLikeStatements,
                      callModelStatement,
+                     callSamplerStatement,
                      posteriorStatement)
   
   #codeStatements
