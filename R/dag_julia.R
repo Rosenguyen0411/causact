@@ -38,7 +38,6 @@
 #' @importFrom igraph graph_from_data_frame topo_sort
 #' @importFrom tidyr gather
 #' @importFrom greta mcmc model as_data
-#' @importFrom tools toTitleCase
 #' @export
 dag_julia<- function(graph,
                       NUTS = FALSE,
