@@ -161,7 +161,7 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(distr == TRUE & obs == FALSE) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(auto_label),
-                                    " = Array{Any}(undef,", plateDimDF$indexLabel, ")\n",
+                                    " = Array{Any}(undef,", plateDimDF$indexLabel, "_dim)\n",
                                     abbrevLabelPad(auto_label),
                                   " ~ ", "[" , paste0(toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs))), "]")) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #PRIOR"))
