@@ -41,7 +41,7 @@
 #' @importFrom tools toTitleCase
 #' @export
 dag_julia<- function(graph,
-                      NUTS = TRUE,
+                      NUTS = FALSE,
                       meaningfulLabels = TRUE,
                       iterations = 4000L,
                       eps = 0.05,
@@ -195,7 +195,7 @@ dag_julia<- function(graph,
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,julia_auto_rhs,nodeOrder) %>%
     dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-    toTitleCase(julia_auto_rhs), "\n end \n end; \" ", ")" )) %>%
+    toTitleCase(julia_auto_rhs), "\n end \n end;\"", ")" )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD
@@ -214,15 +214,8 @@ dag_julia<- function(graph,
   }
   
   
-  
-  ###Create POSTERIOR draws statement
-  meaningfulLabels(graph)  ###assign meaningful labels in cacheEnv
-  extraArgList = list(...)
-  extraArgString = paste0(paste0(names(extraArgList)," = ", as.character(extraArgList)), collapse = ",")
-  mcmcArgs = ifelse(extraArgString == " = ","gretaModel",paste("gretaModel",extraArgString, sep = ","))
-  posteriorStatement = paste0("draws       <- mcmc(",mcmcArgs,")   #POSTERIOR\ndraws       <- replaceLabels(draws)   #POSTERIOR\ndrawsDF     <- draws %>% as.matrix() %>% dplyr::as_tibble()   #POSTERIOR\ntidyDrawsDF <- drawsDF %>% tidyr::gather() %>%
-    addPriorGroups()   #POSTERIOR\n")
-  
+
+  ### CALL MODEL AND ENGINE AND SAMPLING
   
   lhsNodesDF = nodeDF %>%
     dplyr::filter(obs == TRUE | !is.na(data)) %>%
@@ -237,9 +230,11 @@ dag_julia<- function(graph,
   callSamplerStatement = paste0("engine  =  julia_call(\"NUTS\", ", iterations, ",", rate,
                               ")   #CALL SAMPLER")
   
+  df = julia_call("DataFrame",chain_milk_10)
   
   samplingStatement = paste0("draws  =  julia_call(\"sample\", ","model, ","engine",
-                                ")   #SAMPLING")
+                                ")\ndraws_df = julia_call(\"DataFrame\", ","draws",
+                             ")    #SAMPLING")
   
   
   ##########################################
@@ -256,7 +251,7 @@ dag_julia<- function(graph,
   #codeStatements
   
   ###gretaCode as text
-  paste0("## The specified DAG corresponds to the following greta code: \n",
+  paste0("## The specified DAG corresponds to the following Julia code: \n",
          paste(codeStatements, collapse = '\n')) %>% cat()
   
   ##EVALUATE CODE IN GLOBAL ENVIRONMENT
@@ -264,8 +259,8 @@ dag_julia<- function(graph,
   codeExpr = parse(text = codeStatements)
   
   ##eval expression
-  #if(mcmc == TRUE) {eval(codeExpr, envir = globalenv())}
+  if(NUTS == TRUE) {eval(codeExpr, envir = globalenv())}
   
   ###return code
-  return(codeStatements)
+  return(invisible())
 }
