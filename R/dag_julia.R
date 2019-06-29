@@ -43,7 +43,10 @@
 dag_julia<- function(graph,
                       NUTS = FALSE,
                       meaningfulLabels = TRUE,
-                      ...) {
+                      iterations = 4000L,
+                      eps = 0.05,
+                      tau = 10L,
+                      rate = 0.65) {
   
   ###get dimension information
   graph = graph %>% dag_dim()
@@ -191,7 +194,7 @@ dag_julia<- function(graph,
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,julia_auto_rhs,nodeOrder) %>%
     dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-    toTitleCase(julia_auto_rhs), "\n end \n end; \" " )) %>%
+    toTitleCase(julia_auto_rhs), "\n end \n end; \" ", ")" )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD
@@ -219,6 +222,19 @@ dag_julia<- function(graph,
   posteriorStatement = paste0("draws       <- mcmc(",mcmcArgs,")   #POSTERIOR\ndraws       <- replaceLabels(draws)   #POSTERIOR\ndrawsDF     <- draws %>% as.matrix() %>% dplyr::as_tibble()   #POSTERIOR\ntidyDrawsDF <- drawsDF %>% tidyr::gather() %>%
     addPriorGroups()   #POSTERIOR\n")
   
+  
+  lhsNodesDF = nodeDF %>%
+    dplyr::filter(obs == TRUE | !is.na(data)) %>%
+    dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
+    dplyr::pull(auto_label)
+  
+  callModelStatement = paste0("julia_call(\"julia_model\" ",
+                          paste0(lhsNodesDF, collapse = ","),
+                          ")   #CALL MODEL")
+  
+  
+  
+  
   ##########################################
   ###Aggregate all code
   codeStatements = c(dataStatements,
@@ -226,6 +242,7 @@ dag_julia<- function(graph,
                      dimStatements,
                      modelStatement,
                      priorOpLikeStatements,
+                     callModelStatement,
                      posteriorStatement)
   
   #codeStatements
