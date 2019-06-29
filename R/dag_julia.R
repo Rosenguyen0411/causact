@@ -150,7 +150,7 @@ dag_julia<- function(graph,
   modelStatement = paste0("julia_command(\"@model julia_model(",
                           paste0(lhsNodesDF, collapse = ","), 
                           if (nrow(plateDimDF)>0) {
-                            paste0(abbrevLabelPad(plateDimDF$indexLabel), collapse = ",")}, 
+                            paste0(",", abbrevLabelPad(plateDimDF$indexLabel), collapse = ",")}, 
                           ") = begin    #MODEL")
   
   ### Prior, Operations, and Likelihood Get Sorted by Topological Order
@@ -228,6 +228,8 @@ dag_julia<- function(graph,
   
   callModelStatement = paste0("model  =  julia_call(\"julia_model\", ",
                           paste0(lhsNodesDF, collapse = ","),
+                          if (nrow(plateDimDF)>0) {
+                            paste0(",", abbrevLabelPad(plateDimDF$indexLabel), collapse = ",")},
                           ")   #CALL MODEL")
   
   
