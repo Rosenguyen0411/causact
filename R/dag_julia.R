@@ -147,7 +147,7 @@ dag_julia<- function(graph,
     dplyr::pull(auto_label)
   
 
-  modelStatement = paste0("julia_command( \" @model julia_model(",
+  modelStatement = paste0("julia_command(\"@model julia_model(",
                           paste0(lhsNodesDF, collapse = ","),
                           ") = begin    #MODEL")
   
@@ -229,13 +229,17 @@ dag_julia<- function(graph,
     dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
     dplyr::pull(auto_label)
   
-  callModelStatement = paste0("julia_call(\"julia_model\", ",
+  callModelStatement = paste0("model  =  julia_call(\"julia_model\", ",
                           paste0(lhsNodesDF, collapse = ","),
                           ")   #CALL MODEL")
   
   
-  callSamplerStatement = paste0(" \"NUTS\", ", iterations, ",", rate,
+  callSamplerStatement = paste0("engine  =  julia_call(\"NUTS\", ", iterations, ",", rate,
                               ")   #CALL SAMPLER")
+  
+  
+  samplingStatement = paste0("draws  =  julia_call(\"sample\", ","model, ","engine",
+                                ")   #SAMPLING")
   
   
   ##########################################
@@ -247,7 +251,7 @@ dag_julia<- function(graph,
                      priorOpLikeStatements,
                      callModelStatement,
                      callSamplerStatement,
-                     posteriorStatement)
+                     samplingStatement)
   
   #codeStatements
   
