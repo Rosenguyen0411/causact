@@ -230,10 +230,8 @@ dag_julia<- function(graph,
   callSamplerStatement = paste0("engine  =  julia_call(\"NUTS\", ", iterations, ",", rate,
                               ")   #CALL SAMPLER")
   
-  df = julia_call("DataFrame",chain_milk_10)
-  
   samplingStatement = paste0("draws  =  julia_call(\"sample\", ","model, ","engine",
-                                ")\ndraws_df = julia_call(\"DataFrame\", ","draws",
+                                ")", "\ndraws_df  =  julia_call(\"DataFrame\", ","draws",
                              ")    #SAMPLING")
   
   
