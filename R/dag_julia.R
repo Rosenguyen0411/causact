@@ -129,7 +129,7 @@ dag_julia<- function(graph,
     dimStatements = paste(
       paste0(abbrevLabelPad(paste0(plateDimDF$indexLabel,
                                    "_dim")),
-             " <- ",
+             " = ",
              "length(unique(",
              plateDimDF$indexLabel,
              "))   #DIM"
