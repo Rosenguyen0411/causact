@@ -227,7 +227,7 @@ dag_julia<- function(graph,
                           ")   #CALL MODEL")
   
   
-  callSamplerStatement = paste0("engine  =  julia_call(\"NUTS\", ", iterations, ",", rate,
+  callSamplerStatement = paste0("engine  =  julia_call(\"NUTS\", ", iterations, "L,", rate,
                               ")   #CALL SAMPLER")
   
   samplingStatement = paste0("draws  =  julia_call(\"sample\", ","model, ","engine",
