@@ -193,9 +193,9 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(obs == TRUE) %>%  ##only observed nodes
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
-    dplyr::distinct(id,auto_label,julia_likely_auto_rhs,nodeOrder) %>%
+    dplyr::distinct(id,auto_label,julia_prior_auto_rhs,nodeOrder) %>%
     dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-                                    paste0(toupper(substr(julia_likely_auto_rhs, 1, 1)), substr(julia_likely_auto_rhs, 2, nchar(julia_likely_auto_rhs))), "\n end \n end;\"", ")" )) %>%
+                                    paste0(toupper(substr(julia_prior_auto_rhs, 1, 1)), substr(julia_prior_auto_rhs, 2, nchar(julia_prior_auto_rhs))), "\n end \n end;\"", ")" )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD
