@@ -361,7 +361,7 @@ juliaRhsOperationComposition = function(graph) {
                                paste0(argDimLabelNodes$argName[i],
                                       "[",
                                       argDimLabelNodes$argDimLabels[i],
-                                      "]"))
+                                      "[i]]"))
       }
     }  ## end for loop
   } ## end if
