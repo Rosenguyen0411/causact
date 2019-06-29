@@ -321,8 +321,6 @@ juliaRhsPriorComposition = function(graph) {
                                       indexLabel)) %>%
     dplyr::mutate(indexLabel = ifelse(indexLabel == "",as.character(NA),indexLabel)) %>%
     dplyr::mutate(prior_rhs = paste0(rhs,"(",args,
-                                     ifelse(is.na(indexLabel),"",
-                                            paste0(", dim = ",indexLabel)),
                                      ")")) %>%
     dplyr::ungroup() %>%
     select(id,prior_rhs)
