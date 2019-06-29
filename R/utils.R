@@ -235,31 +235,7 @@ rhsPriorComposition = function(graph) {
                                     ")")) %>%
     dplyr::ungroup() %>%
     select(id,prior_rhs)
-  
-  julia_prior_auto_rhsDF = nodeDF %>% dplyr::left_join(argDF, by = "rhsID") %>%
-    dplyr::mutate(argValue = ifelse(is.na(argDimLabels),argValue,
-                                    paste0(argValue,"[",
-                                           ifelse(stringr::str_detect(argDimLabels,","),
-                                                  paste0("cbind(", argDimLabels,")"),
-                                                  argDimLabels),  ## use cbind for R indexing
-                                           "]"))) %>% ## add extraction index to label
-    dplyr::group_by(id,rhsID,rhs) %>%
-    dplyr::summarize(args = paste0(argValue,collapse = ", ")) %>%
-    dplyr::left_join(plateDimDF, by = c("id" = "nodeID")) %>%
-    dplyr::mutate(indexLabel = ifelse(is.na(indexLabel) | indexLabel == "NA","",indexLabel)) %>%
-    dplyr::mutate(indexLabel = ifelse(indexLabel == "","",paste0(indexLabel,"_dim"))) %>%
-    dplyr::group_by(id,rhsID,rhs,args) %>%
-    dplyr::summarize(indexLabel = paste0(indexLabel, collapse = ",")) %>%
-    dplyr::mutate(indexLabel = ifelse(stringr::str_detect(indexLabel,","),
-                                      paste0("c(",indexLabel,")"),
-                                      indexLabel)) %>%
-    dplyr::mutate(indexLabel = ifelse(indexLabel == "",as.character(NA),indexLabel)) %>%
-    dplyr::mutate(prior_rhs = paste0(rhs,"(",args,
-                                     ifelse(is.na(indexLabel),"",
-                                            paste0(", dim = ",indexLabel)),
-                                     ")")) %>%
-    dplyr::ungroup() %>%
-    select(id,prior_rhs)
+
   
 
   ##update graph with new label
@@ -267,9 +243,6 @@ rhsPriorComposition = function(graph) {
     mutate(auto_rhs = ifelse(is.na(prior_rhs),auto_rhs,prior_rhs)) %>%
     dplyr::select(-prior_rhs)
   
-  graph$nodes_df = graph$nodes_df %>% left_join(julia_prior_auto_rhsDF, by = "id") %>%
-    mutate(julia_prior_auto_rhs = ifelse(is.na(prior_rhs),julia_prior_auto_rhs,prior_rhs)) %>%
-    dplyr::select(-prior_rhs)
   
   return(graph) ##now has populated graph$nodes_df$auto_rhs for priors
 }
@@ -309,6 +282,94 @@ rhsOperationComposition = function(graph) {
   return(graph)
 }
 
+
+### JULIA -  get prior composition 
+juliaRhsPriorComposition = function(graph) {
+  
+  ## get nodes which have prior information
+  nodeDF = graph$nodes_df %>%
+    dplyr::filter(distr == TRUE) %>%
+    select(id,rhs,rhsID)
+  
+  ## retireve non-NA argument list
+  argDF = graph$arg_df %>%
+    dplyr::filter(!is.na(argValue))
+  
+  ## get plate information for dim argument of priors
+  plateDimDF = graph$plate_index_df %>%
+    dplyr::filter(!is.na(dataNode)) %>% ##only plates with data
+    dplyr::left_join(graph$plate_node_df, by = "indexID") %>%
+    dplyr::select(nodeID,indexLabel)
+  
+  ## create label for the rhs for these nodes
+  auto_rhsDF = nodeDF %>% dplyr::left_join(argDF, by = "rhsID") %>%
+    dplyr::mutate(argValue = ifelse(is.na(argDimLabels),argValue,
+                                    paste0(argValue,"[",
+                                           ifelse(stringr::str_detect(argDimLabels,","),
+                                                  paste0("cbind(", argDimLabels,")"),
+                                                  argDimLabels),  ## use cbind for R indexing
+                                           "]"))) %>% ## add extraction index to label
+    dplyr::group_by(id,rhsID,rhs) %>%
+    dplyr::summarize(args = paste0(argValue,collapse = ", ")) %>%
+    dplyr::left_join(plateDimDF, by = c("id" = "nodeID")) %>%
+    dplyr::mutate(indexLabel = ifelse(is.na(indexLabel) | indexLabel == "NA","",indexLabel)) %>%
+    dplyr::mutate(indexLabel = ifelse(indexLabel == "","",paste0(indexLabel,"_dim"))) %>%
+    dplyr::group_by(id,rhsID,rhs,args) %>%
+    dplyr::summarize(indexLabel = paste0(indexLabel, collapse = ",")) %>%
+    dplyr::mutate(indexLabel = ifelse(stringr::str_detect(indexLabel,","),
+                                      paste0("c(",indexLabel,")"),
+                                      indexLabel)) %>%
+    dplyr::mutate(indexLabel = ifelse(indexLabel == "",as.character(NA),indexLabel)) %>%
+    dplyr::mutate(prior_rhs = paste0(rhs,"(",args,
+                                     ifelse(is.na(indexLabel),"",
+                                            paste0(", dim = ",indexLabel)),
+                                     ")")) %>%
+    dplyr::ungroup() %>%
+    select(id,prior_rhs)
+  
+  
+  ##update graph with new label
+  graph$nodes_df = graph$nodes_df %>% left_join(auto_rhsDF, by = "id") %>%
+    mutate(auto_rhs = ifelse(is.na(prior_rhs),auto_rhs,prior_rhs)) %>%
+    dplyr::select(-prior_rhs)
+  
+  return(graph) ##now has populated graph$nodes_df$auto_rhs for priors
+}
+
+### JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
+juliaRhsOperationComposition = function(graph) {
+  graph$nodes_df$auto_rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
+                                   graph$nodes_df$rhs,
+                                   graph$nodes_df$auto_rhs)
+  
+  ## update auto_rhs with dimensioned formulas
+  ## get nodes with argDimLabels
+  argDimLabelNodes = graph$arg_df %>%
+    dplyr::filter(!is.na(argDimLabels)) %>%
+    select(rhsID,argName,argDimLabels)
+  
+  ## only do if there arguments needing dim labels added
+  if(nrow(argDimLabelNodes) > 0) { ##start if
+    
+    for(i in 1:nrow(argDimLabelNodes)){
+      ### find index of node with matching rhsID
+      nodePosition = which(graph$nodes_df$rhsID == argDimLabelNodes$rhsID[i])
+      ### replace the string if it is a formula
+      if(graph$nodes_df$distr[nodePosition] == FALSE &
+         !is.na(graph$nodes_df$auto_rhs[nodePosition])) {
+        graph$nodes_df$auto_rhs[nodePosition] =
+          stringr::str_replace(graph$nodes_df$auto_rhs[nodePosition],
+                               argDimLabelNodes$argName[i],
+                               paste0(argDimLabelNodes$argName[i],
+                                      "[",
+                                      argDimLabelNodes$argDimLabels[i],
+                                      "]"))
+      }
+    }  ## end for loop
+  } ## end if
+  
+  return(graph)
+}
 
 
 ### simplified function to pad an abbreviated label with whitespace
