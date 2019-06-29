@@ -162,7 +162,7 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(distr == TRUE & obs == FALSE) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(auto_label),
-                                  " ~ ", paste0(toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs))))) %>%
+                                  " ~ ", paste0(toupper(substr(julia_prior_auto_rhs, 1, 1)), substr(julia_prior_auto_rhs, 2, nchar(julia_prior_auto_rhs))))) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #PRIOR"))
   
   ###Aggregate Code Statements for PRIOR
@@ -195,7 +195,7 @@ dag_julia<- function(graph,
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,julia_auto_rhs,nodeOrder) %>%
     dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-                                    paste0(toupper(substr(julia_auto_rhs, 1, 1)), substr(julia_auto_rhs, 2, nchar(julia_auto_rhs))), "\n end \n end;\"", ")" )) %>%
+                                    paste0(toupper(substr(julia_likely_auto_rhs, 1, 1)), substr(julia_likely_auto_rhs, 2, nchar(julia_likely_auto_rhs))), "\n end \n end;\"", ")" )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD

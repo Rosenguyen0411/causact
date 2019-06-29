@@ -236,7 +236,7 @@ rhsPriorComposition = function(graph) {
     dplyr::ungroup() %>%
     select(id,prior_rhs)
   
-  julia_auto_rhsDF = nodeDF %>% dplyr::left_join(argDF, by = "rhsID") %>%
+  julia_prior_auto_rhsDF = nodeDF %>% dplyr::left_join(argDF, by = "rhsID") %>%
     dplyr::mutate(argValue = ifelse(is.na(argDimLabels),argValue,
                                     paste0(argValue,"[",
                                            ifelse(stringr::str_detect(argDimLabels,","),
@@ -244,7 +244,32 @@ rhsPriorComposition = function(graph) {
                                                   argDimLabels),  ## use cbind for R indexing
                                            "]"))) %>% ## add extraction index to label
     dplyr::group_by(id,rhsID,rhs) %>%
-    dplyr::summarize(args = paste0(argName," = ",argValue,collapse = ", ")) %>%
+    dplyr::summarize(args = paste0(argValue,collapse = ", ")) %>%
+    dplyr::left_join(plateDimDF, by = c("id" = "nodeID")) %>%
+    dplyr::mutate(indexLabel = ifelse(is.na(indexLabel) | indexLabel == "NA","",indexLabel)) %>%
+    dplyr::mutate(indexLabel = ifelse(indexLabel == "","",paste0(indexLabel,"_dim"))) %>%
+    dplyr::group_by(id,rhsID,rhs,args) %>%
+    dplyr::summarize(indexLabel = paste0(indexLabel, collapse = ",")) %>%
+    dplyr::mutate(indexLabel = ifelse(stringr::str_detect(indexLabel,","),
+                                      paste0("c(",indexLabel,")"),
+                                      indexLabel)) %>%
+    dplyr::mutate(indexLabel = ifelse(indexLabel == "",as.character(NA),indexLabel)) %>%
+    dplyr::mutate(prior_rhs = paste0(rhs,"(",args,
+                                     ifelse(is.na(indexLabel),"",
+                                            paste0(", dim = ",indexLabel)),
+                                     ")")) %>%
+    dplyr::ungroup() %>%
+    select(id,prior_rhs)
+  
+  julia_likely_auto_rhsDF = nodeDF %>% dplyr::left_join(argDF, by = "rhsID") %>%
+    dplyr::mutate(argValue = ifelse(is.na(argDimLabels),argValue,
+                                    paste0(argValue,"[",
+                                           ifelse(stringr::str_detect(argDimLabels,","),
+                                                  paste0("cbind(", argDimLabels,")"),
+                                                  argDimLabels),  ## use cbind for R indexing
+                                           "]"))) %>% ## add extraction index to label
+    dplyr::group_by(id,rhsID,rhs) %>%
+    dplyr::summarize(args = paste0(argValue,collapse = ", ")) %>%
     dplyr::left_join(plateDimDF, by = c("id" = "nodeID")) %>%
     dplyr::mutate(indexLabel = ifelse(is.na(indexLabel) | indexLabel == "NA","",indexLabel)) %>%
     dplyr::mutate(indexLabel = ifelse(indexLabel == "","",paste0(indexLabel,"_dim"))) %>%
@@ -266,8 +291,12 @@ rhsPriorComposition = function(graph) {
     mutate(auto_rhs = ifelse(is.na(prior_rhs),auto_rhs,prior_rhs)) %>%
     dplyr::select(-prior_rhs)
   
-  graph$nodes_df = graph$nodes_df %>% left_join(julia_auto_rhsDF, by = "id") %>%
-    mutate(julia_auto_rhs = ifelse(is.na(prior_rhs),julia_auto_rhs,prior_rhs)) %>%
+  graph$nodes_df = graph$nodes_df %>% left_join(julia_prior_auto_rhsDF, by = "id") %>%
+    mutate(julia_prior_auto_rhs = ifelse(is.na(prior_rhs),julia_prior_auto_rhs,prior_rhs)) %>%
+    dplyr::select(-prior_rhs)
+  
+  graph$nodes_df = graph$nodes_df %>% left_join(julia_likely_auto_rhsDF, by = "id") %>%
+    mutate(julia_likely_auto_rhs = ifelse(is.na(prior_rhs),julia_likely_auto_rhs,prior_rhs)) %>%
     dplyr::select(-prior_rhs)
 
   return(graph) ##now has populated graph$nodes_df$auto_rhs for priors
