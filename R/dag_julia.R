@@ -178,7 +178,7 @@ dag_julia<- function(graph,
     dplyr::filter(obs == TRUE) %>%  ##only observed nodes
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,auto_rhs,nodeOrder) %>%
-    dplyr::mutate(codeLine = paste0("for i in 1:length(", data, ") \n " , auto_label, "[i]  ~ ",
+    dplyr::mutate(codeLine = paste0("for i in 1:length(", auto_label, ") \n " , auto_label, "[i]  ~ ",
     auto_rhs, "[i] \n end \n end;" )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
