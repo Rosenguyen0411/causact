@@ -100,9 +100,7 @@ dag_julia<- function(graph,
     dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
     dplyr::mutate(codeLine = paste0(auto_label,
                                     " <- ",
-                                    "as_data(",
-                                    data,
-                                    ")")) %>%
+                                    data)) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #DATA"))
   
   ###Aggregate Code Statements for DATA
@@ -147,7 +145,7 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(distr == TRUE & obs == FALSE) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(auto_label),
-                                    " <- ",
+                                  " ~ ",
                                     auto_rhs)) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #PRIOR"))
   
@@ -163,7 +161,7 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(!is.na(rhs) & distr == FALSE) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(auto_label),
-                                    " <- ",
+                                    " = ",
                                     auto_rhs)) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #OPERATION"))
   
@@ -180,13 +178,8 @@ dag_julia<- function(graph,
     dplyr::filter(obs == TRUE) %>%  ##only observed nodes
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,auto_rhs,nodeOrder) %>%
-    dplyr::mutate(codeLine = paste0(abbrevLabelPad(
-      paste0("distribution(",
-             auto_label,
-             ")")
-    ),
-    " <- ",
-    auto_rhs)) %>%
+    dplyr::mutate(codeLine = paste0("for i in 1:length(", data, ") \n " , auto_label, "[i]  ~ ",
+    auto_rhs, "[i] \n end \n end;" )) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD
