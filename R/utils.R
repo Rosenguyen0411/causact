@@ -308,7 +308,7 @@ juliaRhsPriorComposition = function(graph) {
                                            ifelse(stringr::str_detect(argDimLabels,","),
                                                   paste0("cbind(", argDimLabels,")"),
                                                   argDimLabels),  ## use cbind for R indexing
-                                           "]"))) %>% ## add extraction index to label
+                                           "[i]]"))) %>% ## add extraction index to label
     dplyr::group_by(id,rhsID,rhs) %>%
     dplyr::summarize(args = paste0(argValue,collapse = ", ")) %>%
     dplyr::left_join(plateDimDF, by = c("id" = "nodeID")) %>%
@@ -361,7 +361,7 @@ juliaRhsOperationComposition = function(graph) {
                                paste0(argDimLabelNodes$argName[i],
                                       "[",
                                       argDimLabelNodes$argDimLabels[i],
-                                      "[i]]"))
+                                      "]"))
       }
     }  ## end for loop
   } ## end if
