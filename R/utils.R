@@ -336,7 +336,7 @@ juliaRhsPriorComposition = function(graph) {
 
 ### JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
 juliaRhsOperationComposition = function(graph) {
-  pointWise = list("\\+" = "\\+.",
+  pointWise = c("\\+" = "\\+.",
                    "\\*" = "\\*.",
                    "-" = "-.",
                    "/" = "/.",
