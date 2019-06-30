@@ -336,6 +336,14 @@ juliaRhsPriorComposition = function(graph) {
 
 ### JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
 juliaRhsOperationComposition = function(graph) {
+  pointWise = list("\\+" = "\\+.",
+                   "\\*" = "\\*.",
+                   "-" = "-.",
+                   "/" = "/.",
+                   "\\^" = "\\^.")
+  
+  graph$nodes_df$rhs = if(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs) {stringr::str_replace_all(graph$nodes_df$rhs, pointWise)}
+                                  
   graph$nodes_df$auto_rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
                                    graph$nodes_df$rhs,
                                    graph$nodes_df$auto_rhs)
