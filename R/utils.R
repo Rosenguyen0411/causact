@@ -342,7 +342,9 @@ juliaRhsOperationComposition = function(graph) {
                    "/" = "/.",
                    "\\^" = "\\^.")
   
-  graph$nodes_df$rhs = if(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs)) stringr::str_replace_all(graph$nodes_df$rhs, pointWise)
+  graph$nodes_df$rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
+                              stringr::str_replace_all(graph$nodes_df$rhs, pointWise)
+                              graph$nodes_df$rhs) 
                                   
   graph$nodes_df$auto_rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
                                    graph$nodes_df$rhs,
