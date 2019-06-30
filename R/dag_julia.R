@@ -239,7 +239,7 @@ dag_julia<- function(graph,
   
   NUTScallSamplerStatement = paste0("#Choose one of these 2 following engine:\n","engine  =  julia_call(\"NUTS\", ", iterations, "L,", rate,
            ")   #CALL NUTS SAMPLER")
-  HMCcallSamplerStatement = paste0("\nengine  =  julia_call(\"HMC\", ", iterations, "L,", eps, tau, "L",")   #CALL HMC SAMPLER")
+  HMCcallSamplerStatement = paste0("engine  =  julia_call(\"HMC\", ", iterations, "L,", eps,",", tau, "L)   #CALL HMC SAMPLER")
   
   samplingStatement = paste0("draws  =  julia_call(\"sample\", ","model, ","engine",
                                 ")", "\ndraws_df  =  julia_call(\"DataFrame\", ","draws",
