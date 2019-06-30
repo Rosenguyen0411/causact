@@ -268,7 +268,8 @@ dag_julia<- function(graph,
   ##make expression out of Code Statements
   if(NUTS == TRUE) {
     codeExpr = parse(text = (codeStatements[-8]))
-  } if (HMC == TRUE) {
+  } 
+  if (HMC == TRUE) {
     codeExpr = parse(text = (codeStatements[-7]))
     }
   
