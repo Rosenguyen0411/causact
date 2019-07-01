@@ -117,18 +117,16 @@ dag_node <- function(graph,
       dataString = paste0(baseDF, "$", colnames(rlang::eval_tidy(dataQuo)))
     }
     obs = TRUE
-    length = length(rlang::eval_tidy(dataQuo)) # Rose: add length of the data
   } else if (!is.na(dataString) & keepAsDF == TRUE) {
     numberOfNodes = 1
     dataString = dataString
     obs = TRUE
-    length = length(rlang::eval_tidy(dataQuo)) # Rose: add length of the data
   } else {
     dataString = as.character(NA)  ## restore as NA
     numberOfNodes = max(length(descr), length(label))
   }
 
-
+ length <- length(rlang::eval_tidy(dataQuo)) # Rose: add length of the data
 
   ## initialize nodeDF info for this node(s)
   nodeIDstart = max(graph$nodes_df$id,0) + 1
