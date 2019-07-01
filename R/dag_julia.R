@@ -147,15 +147,14 @@ dag_julia<- function(graph,
   # get all non-observed / non-formula nodes by default
   lhsNodesDF = nodeDF %>%
     dplyr::filter(obs == TRUE | !is.na(data)) %>%
-    dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
     dplyr::pull(auto_label)
 
   
-
+  #dplyr::filter(!(label %in% plateDF$indexLabel)) %>%if (nrow(plateDimDF)>0) {
+    #paste0(",", abbrevLabelPad(plateDimDF$indexLabel), collapse = ",")}, 
+  
   modelStatement = paste0("julia_command(\"@model julia_model(",
                           paste0(lhsNodesDF, collapse = ","), 
-                          if (nrow(plateDimDF)>0) {
-                            paste0(",", abbrevLabelPad(plateDimDF$indexLabel), collapse = ",")}, 
                           ") = begin    #MODEL")
   
   ### Prior, Operations, and Likelihood Get Sorted by Topological Order
