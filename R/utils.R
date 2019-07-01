@@ -283,7 +283,7 @@ rhsOperationComposition = function(graph) {
 }
 
 
-### JULIA -  get prior composition 
+### Rose: JULIA -  get prior composition 
 juliaRhsPriorComposition = function(graph) {
   
   ## get nodes which have prior information
@@ -334,13 +334,13 @@ juliaRhsPriorComposition = function(graph) {
   return(graph) ##now has populated graph$nodes_df$auto_rhs for priors
 }
 
-### JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
+### Rose: JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
 juliaRhsOperationComposition = function(graph) {
-  pointWise = c("\\+" = "\\+.",
-                   "\\*" = "\\*.",
-                   "-" = "-.",
-                   "/" = "/.",
-                   "\\^" = "\\^.")
+  pointWise = c("\\+" = "\\.+",
+                   "\\*" = "\\.*",
+                   "-" = ".-",
+                   "/" = "./",
+                   "\\^" = "\\.^")
   
   graph$nodes_df$rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
                               stringr::str_replace_all(graph$nodes_df$rhs, pointWise),

@@ -28,6 +28,7 @@ dag_create <- function() {
       auto_data = as.character(NA),
       dimID = as.integer(NA),
       auto_rhs = as.character(NA),
+      length = as.integer(NA), # Rose: Add length column
       stringsAsFactors = FALSE
     )[-1,]
 
