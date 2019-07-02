@@ -17,8 +17,7 @@ addPlateDataNode = function(graph,plateIndex,rhs = NA, dataQuo = NA) {
   graph = graph %>%
     dag_node(descr = descr,
              label = label,
-             rhs = !!rhsExpr,
-             length = length)
+             rhs = !!rhsExpr)
 
   ## replace data node for newly created node with value of dataString
   ## I could not figure oute how to pass data as an argument in dag_node
@@ -26,6 +25,7 @@ addPlateDataNode = function(graph,plateIndex,rhs = NA, dataQuo = NA) {
   newNodeIndex = which(graph$nodes_df$label == label)
   graph$nodes_df$data[newNodeIndex] = dataString
   graph$nodes_df$obs[newNodeIndex] = TRUE
+  graph$nodes_df$length[newNodeIndex] = length ## Rose add length for data plate
 
   ## find all nodes in plate
   ## get parent node labels
