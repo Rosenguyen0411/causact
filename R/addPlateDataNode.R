@@ -12,7 +12,7 @@ addPlateDataNode = function(graph,plateIndex,rhs = NA, dataQuo = NA) {
   ## rhs used for adding distribution to observed node
   ## for plates, the observed node is added automatically
   rhsExpr = rlang::enexpr(rhs) ##distribution or formula
-  length = rlang::eval_tidy(rlang::enquo(dataQuo)) ## Rose add length for data plate
+  length = length(rlang::eval_tidy(dataQuo)) ## Rose add length for data plate
 
   graph = graph %>%
     dag_node(descr = descr,
