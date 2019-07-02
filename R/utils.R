@@ -308,13 +308,11 @@ juliaRhsPriorComposition = function(graph) {
     for (i in 1:nrow(uniqueLengthDF)) {
       nodePosition = which(graph$nodes_df$rhsID == uniqueLengthDF$to[i])
       
-      if(graph$nodes_df$distr[nodePosition] == FALSE &
-         graph$nodes_df$length[nodePosition] == 0) {
-        graph$nodes_df$length[nodePosition] = uniqueLengthDF$length[i]
+      graph$nodes_df$length[nodePosition] = ifelse(graph$nodes_df$distr[nodePosition] == FALSE &
+         graph$nodes_df$length[nodePosition] == 0, uniqueLengthDF$length[i], graph$nodes_df$length[nodePosition])
       }
     }
   }
-}
   
   
   
