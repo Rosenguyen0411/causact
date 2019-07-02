@@ -1,7 +1,7 @@
 #' @importFrom rlang is_empty UQ enexpr enquo expr_text
 ### function to take a graph and a plate
 ### index and add a data node
-addPlateDataNode = function(graph,plateIndex,rhs = NA, data = NA) {
+addPlateDataNode = function(graph,plateIndex,rhs = NA, dataQuo = NA) {
 
   plateIndexPosition = which(graph$plate_index_df$indexID == plateIndex)
   nodesOnThisPlate = graph$plate_node_df$nodeID[graph$plate_node_df$indexID == plateIndex]  ### used as to not create extract edges or dimensions for these nodes
@@ -12,7 +12,7 @@ addPlateDataNode = function(graph,plateIndex,rhs = NA, data = NA) {
   ## rhs used for adding distribution to observed node
   ## for plates, the observed node is added automatically
   rhsExpr = rlang::enexpr(rhs) ##distribution or formula
-  length = rlang::eval_tidy(rlang::enquo(data)) ## Rose add length for data plate
+  length = rlang::eval_tidy(rlang::enquo(dataQuo)) ## Rose add length for data plate
 
   graph = graph %>%
     dag_node(descr = descr,

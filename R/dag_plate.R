@@ -79,6 +79,8 @@ dag_plate <- function(graph,
   ### capture data argument as string
   dataNodeExpr = rlang::enexpr(data)
   dataNodeString = rlang::expr_text(dataNodeExpr)
+  dataQuo = rlang::enquo(data) ## Rose: Add length data plate
+  
   if(is.na(head(data,1)[1])) {dataNodeString = as.character(NA)}
 
   ## rhs used for adding distribution to observed node
@@ -113,7 +115,7 @@ dag_plate <- function(graph,
   if (!is.na(dataNodeString) & addDataNode == TRUE) {
     graph = graph %>% addPlateDataNode(plateIndex = lastPlateIndex + 1,
                                        rhs = !!rhsExpr,
-                                       data = data) ## Rose: add length to dataplate
+                                       dataQuo = dataQuo) ## Rose: add length to dataplate
   }
 
   return(graph)  ## return updated graph
