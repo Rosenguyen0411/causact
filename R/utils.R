@@ -290,10 +290,10 @@ juliaRhsPriorComposition = function(graph) {
   operDF = graph$nodes_df %>%
     dplyr::filter(!is.na(rhs) & distr == FALSE)
   
-  
+  if(nrow(operDF) > 0) { ##start if
   ## get the largest length of the data used as argument in operation
-  for (k in 1:nrow(operDF)) {
-    uniqueLengthDF = graph$nodes_df %>%
+    for (k in 1:nrow(operDF)) {
+      uniqueLengthDF = graph$nodes_df %>%
       dplyr::filter(length > 0) %>%
       dplyr::left_join(graph$edges_df, by = c("id" = "from")) %>%
       dplyr::filter(!is.na(to)) %>%
@@ -314,6 +314,7 @@ juliaRhsPriorComposition = function(graph) {
       }
     }
   }
+}
   
   
   
