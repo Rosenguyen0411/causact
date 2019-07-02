@@ -226,13 +226,10 @@ dag_julia<- function(graph,
   
   lhsNodesDF = nodeDF %>%
     dplyr::filter(obs == TRUE | !is.na(data)) %>%
-    dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
     dplyr::pull(auto_label)
   
   callModelStatement = paste0("model  =  julia_call(\"julia_model\", ",
                           paste0(lhsNodesDF, collapse = ","),
-                          if (nrow(plateDimDF)>0) {
-                            paste0(",", abbrevLabelPad(plateDimDF$indexLabel), collapse = ",")},
                           ")   #CALL MODEL")
   
   
