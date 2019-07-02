@@ -170,11 +170,11 @@ dag_julia<- function(graph,
     dplyr::mutate(needPaded = ifelse(nrow(plateDimDF) > 0 & rhsID %in% plateNodeDF$nodeID, 1, 0)) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(codeLine = ifelse(needPaded > 0,
-                                    paste0(causact:::abbrevLabelPad(auto_label)," = Array{Any}(undef,", plateDimDF$indexLabel[which(plateNodeDF$nodeID == rhsID)], "_dim)\n", causact:::abbrevLabelPad(auto_label)," ~ ", "[" , toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs)), "]"),
-                                    paste0(causact:::abbrevLabelPad(auto_label)," ~ ", toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs)))
+                                    paste0(abbrevLabelPad(auto_label)," = Array{Float64}(undef,", plateDimDF$indexLabel[which(plateNodeDF$nodeID == rhsID)], "_dim)\n", abbrevLabelPad(auto_label)," ~ ", "[" , toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs)), "]"),
+                                    paste0(abbrevLabelPad(auto_label)," ~ ", toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs)))
     )) %>% 
     as.data.frame() %>%
-    dplyr::mutate(codeLine = paste0(causact:::abbrevLabelPad(codeLine), "   #PRIOR"))
+    dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #PRIOR"))
   
   
   ###Aggregate Code Statements for PRIOR
