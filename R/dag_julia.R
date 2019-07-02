@@ -144,14 +144,12 @@ dag_julia<- function(graph,
   }
   
   ### Create MODEL Statement
-  # get all non-observed / non-formula nodes by default
+  # get all non-observed / non-formula nodes by default,
+  # treat index label as data 
   lhsNodesDF = nodeDF %>%
     dplyr::filter(obs == TRUE | !is.na(data)) %>%
     dplyr::pull(auto_label)
 
-  
-  #dplyr::filter(!(label %in% plateDF$indexLabel)) %>%if (nrow(plateDimDF)>0) {
-    #paste0(",", abbrevLabelPad(plateDimDF$indexLabel), collapse = ",")}, 
   
   modelStatement = paste0("julia_command(\"@model julia_model(",
                           paste0(lhsNodesDF, collapse = ","), 
