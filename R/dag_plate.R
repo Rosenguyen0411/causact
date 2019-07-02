@@ -112,7 +112,8 @@ dag_plate <- function(graph,
   ## add data node to extract the proper parameter
   if (!is.na(dataNodeString) & addDataNode == TRUE) {
     graph = graph %>% addPlateDataNode(plateIndex = lastPlateIndex + 1,
-                                       rhs = !!rhsExpr)
+                                       rhs = !!rhsExpr,
+                                       dataQuo = rlang::enquo(data)) ## Rose: add length to dataplate
   }
 
   return(graph)  ## return updated graph
