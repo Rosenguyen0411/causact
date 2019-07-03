@@ -160,7 +160,7 @@ rhsDecomp = function(rhs) {
   }
 
   ## standardize the call
-  if(!oneWordEquation) {distExpr = rlang::call_standardise(distExpr)}
+  #if(!oneWordEquation) {distExpr = rlang::call_standardise(distExpr)}
 
   ## return function name
   if(!oneWordEquation) {fnName = rlang::call_name(distExpr)}
@@ -377,6 +377,7 @@ juliaRhsOperationComposition = function(graph) {
                   "exp" = "exp.",
                    "ilogit" = "logistic.")
   
+  ## replace the input rhs into pointWise rhs
   graph$nodes_df$rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
                               stringr::str_replace_all(graph$nodes_df$rhs, pointWise),
                               graph$nodes_df$rhs) 
