@@ -60,7 +60,7 @@ graph = dag_create() %>%
            rhs = normal(mu, sigma),
            data = K) %>%
   dag_node(descr = "Variation", label = "sigma",
-           rhs = exponential(1.0),
+           rhs = exponential(1),
            child = "K") %>%
   dag_node(descr = "Mean", label = "mu",
            rhs = a + bN * N + bM * M,
@@ -173,6 +173,5 @@ graph %>% dag_render()
 #graph %>% dag_greta()
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
-
 
 
