@@ -268,15 +268,17 @@ dag_julia<- function(graph,
   
   ##EVALUATE CODE IN GLOBAL ENVIRONMENT
   ##make expression out of Code Statements
-  if(NUTS == TRUE) {
-    codeExpr = parse(text = (codeStatements[-8]))
-  } 
-  if (HMC == TRUE) {
-    codeExpr = parse(text = (codeStatements[-7]))
-    }
+  #if(NUTS == TRUE) {
+    #codeExpr = parse(text = (codeStatements[-8]))
+  #} 
+  #if (HMC == TRUE) {
+    #codeExpr = parse(text = (codeStatements[-7]))
+    #}
+  
+  codeExpr = parse(text = codeStatements)
   
   ##eval expression
-  if((NUTS == TRUE) | (HMC == TRUE)) {eval(codeExpr, envir = globalenv())}
+  if(NUTS == TRUE) {eval(codeExpr, envir = globalenv())}
   
   ###return code
   return(invisible())
