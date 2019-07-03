@@ -220,6 +220,69 @@ graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
 
+############# Statistical Rethinking - Chimpanzees model (m11.3)
+######### HAVE TO STRIP OFF ARGUMENT NAME IN ILOGIT
+
+library(rethinking)
+data(chimpanzees)
+d <- chimpanzees
+pulled_left <- as.integer(d$pulled_left)
+condition <- d$condition
+prosoc_left <- d$prosoc_left
 
 
+graph = dag_create() %>%
+  dag_node(descr = "Pull left", label = "pull",
+           rhs = binomial(1L, p),
+           data = pulled_left) %>%
+  dag_node(descr = "Pull Probability", label = "p",
+           rhs = ilogit(logit_p),
+           child = "pull") %>%
+  dag_node(descr = "Logit Probability", label = "logit_p",
+           rhs = a + bp * prosoc_left + bpC * condition * prosoc_left,
+           child = "p")  %>%
+  dag_node(descr = "condition", label = "condition",
+           data = condition,
+           child = "logit_p") %>%
+  dag_node(descr = "prosoc_left", label = "prosoc_left",
+           data = prosoc_left,
+           child = "logit_p") %>%
+  dag_node(descr = "intercept", label = "a",
+           rhs = normal(0, 10),
+           child = "logit_p") %>%
+  dag_node(descr = "prosoc slope", label = "bp",
+           rhs = normal(0, 10),
+           child = "logit_p") %>%
+  dag_node(descr = "prosoc and condition slope", label = "bpC",
+           rhs = normal(0, 10),
+           child = "logit_p")
 
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE)
+
+
+## The specified DAG corresponds to the following Julia code: 
+prosoc_left <- prosoc_left   #DATA
+condition <- condition       #DATA
+pull <- pulled_left          #DATA
+julia_command("@model julia_model(prosoc_left,condition,pull) = begin    #MODEL
+bpC    = Array{Float64}(undef,1)
+bpC    ~ Normal(0, 10) #PRIOR
+bp     = Array{Float64}(undef,1)
+bp     ~ Normal(0, 10) #PRIOR
+a      = Array{Float64}(undef,1)
+a      ~ Normal(0, 10) #PRIOR
+logit_p = a .+ bp .* prosoc_left .+ bpC .* condition .* prosoc_left   #OPERATION
+p       = logistic.(logit_p)                                      #OPERATION
+for i in 1:length(pull  ) 
+ pull[i] ~Binomial(1, p[i])
+ end 
+ end;")   #LIKELIHOOD
+model  =  julia_call("julia_model", prosoc_left,condition,pull)   #CALL MODEL
+#Choose one of these 2 following engine:
+engine  =  julia_call("NUTS", 4000L,0.65)   #CALL NUTS SAMPLER
+#engine  =  julia_call("HMC", 4000L,0.1,10L)   #CALL HMC SAMPLER
+draws  =  julia_call("sample", model, engine)
+draws_df  =  julia_call("DataFrame", draws)    #SAMPLING
