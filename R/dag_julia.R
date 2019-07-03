@@ -47,7 +47,7 @@ dag_julia<- function(graph,
                       NUTS = FALSE,
                       HMC = FALSE,
                       meaningfulLabels = TRUE,
-                      iterations = 4000L,
+                      iterations = 1000L,
                       eps = 0.1,
                       tau = 10L,
                       rate = 0.65,
@@ -260,6 +260,24 @@ dag_julia<- function(graph,
                      HMCcallSamplerStatement,
                      samplingStatement)
   
+  NUTScodeStatements = c(dataStatements,
+                         plateDataStatements,
+                         modelStatement,
+                         dimStatements,
+                         priorOpLikeStatements,
+                         callModelStatement,
+                         NUTScallSamplerStatement,
+                         samplingStatement)
+  
+  HMCcodeStatements = c(dataStatements,
+                         plateDataStatements,
+                         modelStatement,
+                         dimStatements,
+                         priorOpLikeStatements,
+                         callModelStatement,
+                         HMCcallSamplerStatement,
+                         samplingStatement)
+  
   #codeStatements
   
   ###gretaCode as text
@@ -268,17 +286,15 @@ dag_julia<- function(graph,
   
   ##EVALUATE CODE IN GLOBAL ENVIRONMENT
   ##make expression out of Code Statements
-  #if(NUTS == TRUE) {
-    #codeExpr = parse(text = (codeStatements[-8]))
-  #} 
-  #if (HMC == TRUE) {
-    #codeExpr = parse(text = (codeStatements[-7]))
-    #}
+  NUTScodeExpr = parse(text = (NUTScodeStatements))
+
+  HMCcodeExpr = parse(text = (HMCcodeStatements))
   
-  codeExpr = parse(text = codeStatements)
+  #codeExpr = parse(text = codeStatements)
   
   ##eval expression
-  if(NUTS == TRUE) {eval(codeExpr, envir = globalenv())}
+  if(NUTS == TRUE) {eval(NUTScodeExpr, envir = globalenv())}
+  if(HMC == TRUE) {eval(HMCcodeExpr, envir = globalenv())}
   
   ###return code
   return(invisible())
