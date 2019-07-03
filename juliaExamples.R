@@ -175,3 +175,51 @@ graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
 
+
+############# Statistical Rethinking - Tulips model (m8.7), linear regression of bloom on water, shade and water*shade 
+library(rethinking)
+data(tulips)
+d <- tulips
+blooms_std <- d$blooms / max(d$blooms)
+water_cent <- d$water - mean(d$water)
+shade_cent <- d$shade - mean(d$shade)
+
+
+graph = dag_create() %>%
+  dag_node(descr = "Bloom std", label = "bloom",
+           rhs = normal(mu, sigma),
+           data = blooms_std) %>%
+  dag_node(descr = "Variation", label = "sigma",
+           rhs = exponential(1),
+           child = "bloom") %>%
+  dag_node(descr = "Mean", label = "mu",
+           rhs = a + bw * water_cent + bs * shade_cent + bws * water_cent * shade_cent,
+           child = "bloom")  %>%
+  dag_node(descr = "Water", label = "water_cent",
+           data = water_cent,
+           child = "mu") %>%
+  dag_node(descr = "Shade", label = "shade_cent",
+           data = shade_cent,
+           child = "mu") %>%
+  dag_node(descr = "intercept", label = "a",
+           rhs = normal(0.5, 0.25),
+           child = "mu") %>%
+  dag_node(descr = "water slope", label = "bw",
+           rhs = normal(0, 0.25),
+           child = "mu") %>%
+  dag_node(descr = "shade slope", label = "bs",
+           rhs = normal(0, 0.25),
+           child = "mu") %>%
+  dag_node(descr = "water and shade slope", label = "bws",
+           rhs = normal(0, 0.25),
+           child = "mu")
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE)
+
+
+
+
+
