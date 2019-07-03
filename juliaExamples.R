@@ -2,9 +2,14 @@ remove.packages("causact")
 remotes::install_github("Rosenguyen0411/causact")
 
 ########### SET UP
+# if the JuliaCall package has not been installed, run the following line
+#install.packages("JuliaCall")
+
 library(JuliaCall)
 
-## initial setup
+# if there is a StatsModels error => in Julia type: ] add StatsModels@0.5
+
+## initial setup, need to provide JULIA_HOME
 julia <- julia_setup(JULIA_HOME="/Applications/Julia-1.1.app/Contents/Resources/julia/bin/")
 
 ## include Julia package, need to install these packages in Julia first
@@ -21,8 +26,29 @@ library(tidyverse)
 library(greta)
 library(rethinking)
 
+################ Simple coin flip example
+###### RUN IN 18 SECONDS FOR NUTS ###########
+
+data = rbern(1000) # 1000 flips
+
+graph = dag_create() %>%
+  dag_node(descr = "data", label = "d",
+           rhs = bernoulli(theta),
+           data = data) %>%
+  dag_node(descr = "Card Probability", label = "theta",
+           rhs = beta(1,1),
+           child = "d") 
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS = TRUE)
+graph %>% dag_julia(HMC = TRUE)
+
+summary(draws_df)
+
 
 ############ CAR EXAMPLE
+#########  RUN IN 35 SECONDS FOR NUTS ###########
+
 graph = dag_create() %>%
   dag_node(descr = "Get Card", label = "y",
            rhs = bernoulli(theta),
@@ -39,11 +65,12 @@ graph %>% dag_render()
 graph %>% dag_julia(NUTS = TRUE)
 graph %>% dag_julia(HMC = TRUE)
 
+summary(draws_df)
 
 
 ############## Statistical Rethinking - Milk model (m5.7), linear regression of Kcal on neocortex and mass
 
-########## SIGMA NOT DEFINED ERROR!!!!!!!!!!!!!
+########## RUN IN 2.27 SECONDS !!!!!!!!!!!!!
 
 ## Get the data ready
 
@@ -83,9 +110,13 @@ graph = dag_create() %>%
 graph %>% dag_render()
 #graph %>% dag_greta()
 graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE)
 
+summary(draws_df)
 
 ############# Statistical Rethinking - Milk model (m5.10), with categorical variables: clade and house
+
+######## RUN IN 8.3 SECONDS ##########
 
 data(milk)
 d <- milk
@@ -126,9 +157,13 @@ graph %>% dag_render()
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
+summary(draws_df)
 
 ############# Statistical Rethinking - Rugged model (m8.5), linear regression of log_gdp on rugged, 
 ############## for african and non-african countries
+
+############ RUN IN 35 SECONDS ##########
+
 library(rethinking)
 data(rugged)
 d <- rugged
@@ -174,9 +209,13 @@ graph %>% dag_render()
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
+summary(draws_df)
 
 
 ############# Statistical Rethinking - Tulips model (m8.7), linear regression of bloom on water, shade and water*shade 
+
+########### RUN IN 3 SECONDS ##################
+
 library(rethinking)
 data(tulips)
 d <- tulips
@@ -217,11 +256,13 @@ graph = dag_create() %>%
 graph %>% dag_render()
 #graph %>% dag_greta()
 graph %>% dag_julia(NUTS= TRUE)
-graph %>% dag_julia(HMC= TRUE)
+graph %>% dag_julia(HMC= TRUE) ## reject alot of proposal, big std => NUTS is better
+
+summary(draws_df)
 
 
-############# Statistical Rethinking - Chimpanzees model (m11.3)
-######### HAVE TO STRIP OFF ARGUMENT NAME IN ILOGIT
+############# Statistical Rethinking - Chapter 11- Chimpanzees model (m11.3)
+######## RUN IN 36 SECONDS for NUTS and 21 SECONDS for HMC ############
 
 library(rethinking)
 data(chimpanzees)
@@ -260,29 +301,8 @@ graph = dag_create() %>%
 graph %>% dag_render()
 #graph %>% dag_greta()
 graph %>% dag_julia(NUTS= TRUE)
-graph %>% dag_julia(HMC= TRUE)
+graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS
+
+summary(draws_df)
 
 
-## The specified DAG corresponds to the following Julia code: 
-prosoc_left <- prosoc_left   #DATA
-condition <- condition       #DATA
-pull <- pulled_left          #DATA
-julia_command("@model julia_model(prosoc_left,condition,pull) = begin    #MODEL
-bpC    = Array{Float64}(undef,1)
-bpC    ~ Normal(0, 10) #PRIOR
-bp     = Array{Float64}(undef,1)
-bp     ~ Normal(0, 10) #PRIOR
-a      = Array{Float64}(undef,1)
-a      ~ Normal(0, 10) #PRIOR
-logit_p = a .+ bp .* prosoc_left .+ bpC .* condition .* prosoc_left   #OPERATION
-p       = logistic.(logit_p)                                      #OPERATION
-for i in 1:length(pull  ) 
- pull[i] ~Binomial(1, p[i])
- end 
- end;")   #LIKELIHOOD
-model  =  julia_call("julia_model", prosoc_left,condition,pull)   #CALL MODEL
-#Choose one of these 2 following engine:
-engine  =  julia_call("NUTS", 4000L,0.65)   #CALL NUTS SAMPLER
-#engine  =  julia_call("HMC", 4000L,0.1,10L)   #CALL HMC SAMPLER
-draws  =  julia_call("sample", model, engine)
-draws_df  =  julia_call("DataFrame", draws)    #SAMPLING
