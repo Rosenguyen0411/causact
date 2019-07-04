@@ -317,9 +317,9 @@ juliaRhsPriorComposition = function(graph) {
   
   ### replace greta truncation with Julia truncation syntax 
   truncDF = graph$arg_df %>%
-    #dplyr::mutate(truncJulia = as.character(NA)) %>%
-    #dplyr::mutate(truncJulia = ifelse(argName == "trunc" & !is.na(argValue), gsub("\\)","", gsub("c\\(",",", #argValue)), truncJulia)) %>%
-    dplyr::mutate(argValue = ifelse(argName == "trunc" & !is.na(argValue), gsub("\\)","", gsub("c\\(",",",argValue)), argValue))
+    dplyr::mutate(truncJulia = as.character(NA)) %>%
+    dplyr::mutate(truncJulia = ifelse(argName == "trunc" & !is.na(argValue), gsub("\\)","", gsub("c\\(",",", argValue)), truncJulia)) %>%
+    dplyr::mutate(argValue = ifelse(argName == "trunc" & !is.na(argValue), as.character(NA), argValue))
   
   ## get nodes which have prior information
   nodeDF = graph$nodes_df %>%
@@ -370,12 +370,12 @@ juliaRhsPriorComposition = function(graph) {
   
   ## keep node with truncation input
   truncJuliaDF = truncDF %>%
-    dplyr::filter(argName == "trunc" & !is.na(argValue)) %>%
-    dplyr:: select(rhsID, argValue)
+    dplyr::filter(argName == "trunc" & !is.na(truncJulia)) %>%
+    dplyr:: select(rhsID, truncJulia)
   
   ## pad "Truncated()" to make it Julia syntax
   auto_rhsDF = auto_rhsDF %>% left_join(truncJuliaDF, by = "rhsID") %>%
-    dplyr::mutate(prior_rhs = ifelse(!is.na(argValue), paste0("Truncated(", prior_rhs, ")"), prior_rhs)) %>%
+    dplyr::mutate(prior_rhs = ifelse(!is.na(truncJulia), paste0("Truncated(", prior_rhs, truncJulia, ")"), prior_rhs)) %>%
     dplyr::select(id, prior_rhs)
   
   ##update graph with new label
