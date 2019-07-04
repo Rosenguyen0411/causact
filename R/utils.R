@@ -293,29 +293,33 @@ juliaRhsPriorComposition = function(graph) {
   #& distr == FALSE graph$nodes_df$distr[nodePosition] == FALSE &
   
   if(nrow(dataDF) > 0) { ##start if
-  ## get the largest length of the data used as argument in operation
+    ## get the largest length of the data used as argument in operation
     for (k in 1:nrow(dataDF)) {
       uniqueLengthDF = graph$nodes_df %>%
-      dplyr::filter(length > 0) %>%
-      dplyr::left_join(graph$edges_df, by = c("id" = "from")) %>%
-      dplyr::filter(!is.na(to)) %>%
-      dplyr::group_by(to) %>%
-      dplyr::mutate(length = max(length)) %>% ## keep the largest length only
-      dplyr::filter(row_number(to) == 1) %>%
-      dplyr::ungroup() %>%
-      as.data.frame()
-    
-    
-    ## child will get the largest length from its parents
-    for (i in 1:nrow(uniqueLengthDF)) {
-      nodePosition = which(graph$nodes_df$id == uniqueLengthDF$to[i])
+        dplyr::filter(length > 0) %>%
+        dplyr::left_join(graph$edges_df, by = c("id" = "from")) %>%
+        dplyr::filter(!is.na(to)) %>%
+        dplyr::group_by(to) %>%
+        dplyr::mutate(length = max(length)) %>% ## keep the largest length only
+        dplyr::filter(row_number(to) == 1) %>%
+        dplyr::ungroup() %>%
+        as.data.frame()
       
-      graph$nodes_df$length[nodePosition] = ifelse(graph$nodes_df$length[nodePosition] == 0, uniqueLengthDF$length[i], graph$nodes_df$length[nodePosition])
+      
+      ## child will get the largest length from its parents
+      for (i in 1:nrow(uniqueLengthDF)) {
+        nodePosition = which(graph$nodes_df$id == uniqueLengthDF$to[i])
+        
+        graph$nodes_df$length[nodePosition] = ifelse(graph$nodes_df$length[nodePosition] == 0, uniqueLengthDF$length[i], graph$nodes_df$length[nodePosition])
       }
     }
   }
   
-  
+  ### replace greta truncation with Julia truncation syntax 
+  truncDF = graph$arg_df %>%
+    #dplyr::mutate(truncJulia = as.character(NA)) %>%
+    #dplyr::mutate(truncJulia = ifelse(argName == "trunc" & !is.na(argValue), gsub("\\)","", gsub("c\\(",",", #argValue)), truncJulia)) %>%
+    dplyr::mutate(argValue = ifelse(argName == "trunc" & !is.na(argValue), gsub("\\)","", gsub("c\\(",",",argValue)), argValue))
   
   ## get nodes which have prior information
   nodeDF = graph$nodes_df %>%
@@ -323,7 +327,7 @@ juliaRhsPriorComposition = function(graph) {
     dplyr::select(id,rhs,rhsID)
   
   ## retireve non-NA argument list
-  argDF = graph$arg_df %>%
+  argDF = truncDF %>%
     dplyr::left_join(graph$nodes_df, by = c("argValue" = "label")) %>%
     dplyr::filter(!is.na(argValue)) %>% 
     dplyr::select(rhsID.x, argName, argType, argValue, argDimLabels, length) %>%
@@ -358,7 +362,17 @@ juliaRhsPriorComposition = function(graph) {
     dplyr::mutate(prior_rhs = paste0(rhs,"(",args,
                                      ")")) %>%
     dplyr::ungroup() %>%
-    select(id,prior_rhs)
+    select(id,prior_rhs, rhsID)
+  
+  ## keep node with truncation input
+  truncJuliaDF = truncDF %>%
+    dplyr::filter(argName == "trunc" & !is.na(argValue)) %>%
+    dplyr:: select(rhsID, argValue)
+  
+  ## pad "Truncated()" to make it Julia syntax
+  auto_rhsDF = auto_rhsDF %>% left_join(truncJuliaDF, by = "rhsID") %>%
+    dplyr::mutate(prior_rhs = ifelse(!is.na(argValue), paste0("Truncated(", prior_rhs, ")"), prior_rhs)) %>%
+    dplyr::select(id, prior_rhs)
   
   ##update graph with new label
   graph$nodes_df = graph$nodes_df %>% left_join(auto_rhsDF, by = "id") %>%
@@ -366,7 +380,7 @@ juliaRhsPriorComposition = function(graph) {
     dplyr::select(-prior_rhs)
   
   return(graph) ##now has populated graph$nodes_df$auto_rhs for priors
-}
+} 
 
 ### Rose: JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
 juliaRhsOperationComposition = function(graph) {
