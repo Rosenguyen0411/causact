@@ -287,14 +287,14 @@ rhsOperationComposition = function(graph) {
 juliaRhsPriorComposition = function(graph) {
   
   ## operation Dataframe
-  operDF = graph$nodes_df %>%
-    dplyr::filter(!is.na(rhs))
+  dataDF = graph$nodes_df %>%
+    dplyr::filter(!is.na(data))
   
   #& distr == FALSE graph$nodes_df$distr[nodePosition] == FALSE &
   
-  if(nrow(operDF) > 0) { ##start if
+  if(nrow(dataDF) > 0) { ##start if
   ## get the largest length of the data used as argument in operation
-    for (k in 1:nrow(operDF)) {
+    for (k in 1:nrow(dataDF)) {
       uniqueLengthDF = graph$nodes_df %>%
       dplyr::filter(length > 0) %>%
       dplyr::left_join(graph$edges_df, by = c("id" = "from")) %>%
@@ -308,7 +308,7 @@ juliaRhsPriorComposition = function(graph) {
     
     ## child will get the largest length from its parents
     for (i in 1:nrow(uniqueLengthDF)) {
-      nodePosition = which(graph$nodes_df$rhsID == uniqueLengthDF$to[i])
+      nodePosition = which(graph$nodes_df$id == uniqueLengthDF$to[i])
       
       graph$nodes_df$length[nodePosition] = ifelse(graph$nodes_df$length[nodePosition] == 0, uniqueLengthDF$length[i], graph$nodes_df$length[nodePosition])
       }
