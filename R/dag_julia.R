@@ -208,7 +208,7 @@ dag_julia<- function(graph,
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,auto_rhs,nodeOrder) %>%
     dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-                                    paste0(toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs))), "\n end \n end;\"", ")" )) %>%
+                                    paste0(toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs))), "\n end \n")) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD
@@ -226,7 +226,8 @@ dag_julia<- function(graph,
       dplyr::pull(statement)
   }
   
-  
+  ## End Statement
+  endStatement = paste0("end;\"", ")" )
 
   ### CALL MODEL AND ENGINE AND SAMPLING
   
@@ -255,6 +256,7 @@ dag_julia<- function(graph,
                      modelStatement,
                      dimStatements,
                      priorOpLikeStatements,
+                     endStatement,
                      callModelStatement,
                      NUTScallSamplerStatement,
                      HMCcallSamplerStatement,
@@ -265,6 +267,7 @@ dag_julia<- function(graph,
                          modelStatement,
                          dimStatements,
                          priorOpLikeStatements,
+                         endStatement,
                          callModelStatement,
                          NUTScallSamplerStatement,
                          samplingStatement)
@@ -274,6 +277,7 @@ dag_julia<- function(graph,
                          modelStatement,
                          dimStatements,
                          priorOpLikeStatements,
+                         endStatement,
                          callModelStatement,
                          HMCcallSamplerStatement,
                          samplingStatement)
