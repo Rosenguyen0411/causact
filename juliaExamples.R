@@ -306,3 +306,55 @@ graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS
 summary(draws_df)
 
 
+############# Statistical Rethinking - Chapter 11 - Chimpanzees model (m11.4), each intercept for each actor (7 actors)
+
+########### RUN FOR 90 SECONDS FOR NUTS AND 26 SECONDS FOR HMC ###########
+
+## data
+library(rethinking)
+data(chimpanzees)
+d <- chimpanzees
+pulled_left <- as.integer(d$pulled_left)
+condition <- d$condition
+prosoc_left <- d$prosoc_left
+actor <- d$actor
+
+
+graph = dag_create() %>%
+  dag_node(descr = "Pull left", label = "pull",
+           rhs = binomial(1L, p),
+           data = pulled_left) %>%
+  dag_node(descr = "Pull Probability", label = "p",
+           rhs = ilogit(logit_p),
+           child = "pull") %>%
+  dag_node(descr = "Logit Probability", label = "logit_p",
+           rhs = a + bp * prosoc_left + bpC * condition * prosoc_left,
+           child = "p")  %>%
+  dag_node(descr = "condition", label = "condition",
+           data = condition,
+           child = "logit_p") %>%
+  dag_node(descr = "prosoc_left", label = "prosoc_left",
+           data = prosoc_left,
+           child = "logit_p") %>%
+  dag_node(descr = "intercept", label = "a",
+           rhs = normal(0, 10),
+           child = "logit_p") %>%
+  dag_node(descr = "prosoc slope", label = "bp",
+           rhs = normal(0, 10),
+           child = "logit_p") %>%
+  dag_node(descr = "prosoc and condition slope", label = "bpC",
+           rhs = normal(0, 10),
+           child = "logit_p") %>%
+  dag_plate(descr = "actor indicator", label = "actor",
+            nodeLabels = "a",
+            data = actor,
+            addDataNode = TRUE)
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS
+
+summary(draws_df)
+
+
