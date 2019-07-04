@@ -171,8 +171,8 @@ dag_julia<- function(graph,
     dplyr::mutate(needPaded = ifelse(nrow(plateDimDF) > 0 & id %in% plateNodeDF$nodeID, 1, 0)) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(codeLine = ifelse(needPaded > 0,
-                                    paste0(abbrevLabelPad(auto_label)," = Array{Float64}(undef,", plateDimDF$indexLabel[plateNodeDF$indexID[which(plateNodeDF$nodeID == id)]], "_dim)\n", abbrevLabelPad(auto_label)," ~ ", "[" , toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs)), "]\n"),
-                                    paste0(abbrevLabelPad(auto_label)," = Array{Float64}(undef,1)\n",abbrevLabelPad(auto_label)," ~ ", toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs)))
+                                    paste0(abbrevLabelPad(auto_label)," = Array{Float64}(undef,", plateDimDF$indexLabel[plateNodeDF$indexID[which(plateNodeDF$nodeID == id)]], "_dim)\n", abbrevLabelPad(auto_label)," ~ ", "[" , auto_rhs, "]\n"),
+                                    paste0(abbrevLabelPad(auto_label)," = Array{Float64}(undef,1)\n",abbrevLabelPad(auto_label)," ~ ", auto_rhs)))
     )) %>% 
     as.data.frame() %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), " #PRIOR"))
@@ -207,8 +207,7 @@ dag_julia<- function(graph,
     dplyr::filter(obs == TRUE) %>%  ##only observed nodes
     dplyr::inner_join(edgeDF, by = c("id" = "to")) %>% # only nodes with parents
     dplyr::distinct(id,auto_label,auto_rhs,nodeOrder) %>%
-    dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~",
-                                    paste0(toupper(substr(auto_rhs, 1, 1)), substr(auto_rhs, 2, nchar(auto_rhs))), "\n end \n")) %>%
+    dplyr::mutate(codeLine = paste0("for i in 1:length(", abbrevLabelPad(auto_label), ") \n " , auto_label, "[i] ~", paste0(auto_rhs, "\n end \n"))) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #LIKELIHOOD"))
   
   ###Aggregate Code Statements for LIKELIHOOD

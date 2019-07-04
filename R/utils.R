@@ -364,6 +364,10 @@ juliaRhsPriorComposition = function(graph) {
     dplyr::ungroup() %>%
     select(id,prior_rhs, rhsID)
   
+  ## Change first letter of distribution to upper case
+  auto_rhsDF = auto_rhsDF %>%
+    dplyr::mutate(prior_rhs = paste0(toupper(substr(prior_rhs, 1, 1)), substr(prior_rhs, 2, nchar(prior_rhs))))
+  
   ## keep node with truncation input
   truncJuliaDF = truncDF %>%
     dplyr::filter(argName == "trunc" & !is.na(argValue)) %>%
@@ -380,7 +384,7 @@ juliaRhsPriorComposition = function(graph) {
     dplyr::select(-prior_rhs)
   
   return(graph) ##now has populated graph$nodes_df$auto_rhs for priors
-} 
+}  
 
 ### Rose: JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
 juliaRhsOperationComposition = function(graph) {
