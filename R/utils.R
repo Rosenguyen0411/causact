@@ -288,7 +288,9 @@ juliaRhsPriorComposition = function(graph) {
   
   ## operation Dataframe
   operDF = graph$nodes_df %>%
-    dplyr::filter(!is.na(rhs) & distr == FALSE)
+    dplyr::filter(!is.na(rhs))
+  
+  #& distr == FALSE
   
   if(nrow(operDF) > 0) { ##start if
   ## get the largest length of the data used as argument in operation
