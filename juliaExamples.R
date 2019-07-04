@@ -353,8 +353,53 @@ graph = dag_create() %>%
 graph %>% dag_render()
 #graph %>% dag_greta()
 graph %>% dag_julia(NUTS= TRUE)
-graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS
+graph %>% dag_julia(HMC= TRUE) 
 
 summary(draws_df)
 
+
+############# Statistical Rethinking - Chapter 11 - UCBadmit model (m11.9), each intercept for each department
+################# RUN IN 5.3 SECONDS FOR NUTS ###################
+## data
+library(rethinking)
+data(UCBadmit)
+d <- UCBadmit
+male <- ifelse( d$applicant.gender=="male" , 1 , 0 )
+dept_id <- coerce_index( d$dept )
+admit <- d$admit
+applications <- d$applications
+
+graph = dag_create() %>%
+  dag_node(descr = "Admission Decision", label = "admit",
+           rhs = binomial(applications, p),
+           data = admit) %>%
+  dag_node(descr = "Admit Probability", label = "p",
+           rhs = ilogit(logit_p),
+           child = "admit") %>%
+  dag_node(descr = "Logit Probability", label = "logit_p",
+           rhs = a + bm * male,
+           child = "p")  %>%
+  dag_node(descr = "Number of Applications", label = "applications",
+           data = applications,
+           child = "admit") %>%
+  dag_node(descr = "Male Indicator", label = "male",
+           data = male,
+           child = "logit_p") %>%
+  dag_node(descr = "Intercept", label = "a",
+           rhs = normal(0, 10),
+           child = "logit_p") %>%
+  dag_node(descr = "Male Slope", label = "bm",
+           rhs = normal(0, 10),
+           child = "logit_p") %>%
+  dag_plate(descr = "Department Indicator", label = "dept_id",
+            nodeLabels = "a",
+            data = dept_id,
+            addDataNode = TRUE)
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS 
+
+summary(draws_df)
 
