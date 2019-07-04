@@ -261,6 +261,55 @@ graph %>% dag_julia(HMC= TRUE) ## reject alot of proposal, big std => NUTS is be
 summary(draws_df)
 
 
+############# Statistical Rethinking - Tulips model (m8.7), linear regression of bloom on water, shade and water*shade 
+############# CHANGE EXPONENTIAL() TO HALF CAUCHY => TEST TRUNCATION ###########
+
+########### RUN IN 5.57 SECONDS ##################
+
+library(rethinking)
+data(tulips)
+d <- tulips
+blooms_std <- d$blooms / max(d$blooms)
+water_cent <- d$water - mean(d$water)
+shade_cent <- d$shade - mean(d$shade)
+
+
+graph = dag_create() %>%
+  dag_node(descr = "Bloom std", label = "bloom",
+           rhs = normal(mu, sigma),
+           data = blooms_std) %>%
+  dag_node(descr = "Variation", label = "sigma",
+           rhs = cauchy(0, 1, truncation = c(0, Inf)),
+           child = "bloom") %>%
+  dag_node(descr = "Mean", label = "mu",
+           rhs = a + bw * water_cent + bs * shade_cent + bws * water_cent * shade_cent,
+           child = "bloom")  %>%
+  dag_node(descr = "Water", label = "water_cent",
+           data = water_cent,
+           child = "mu") %>%
+  dag_node(descr = "Shade", label = "shade_cent",
+           data = shade_cent,
+           child = "mu") %>%
+  dag_node(descr = "intercept", label = "a",
+           rhs = normal(0.5, 0.25),
+           child = "mu") %>%
+  dag_node(descr = "water slope", label = "bw",
+           rhs = normal(0, 0.25),
+           child = "mu") %>%
+  dag_node(descr = "shade slope", label = "bs",
+           rhs = normal(0, 0.25),
+           child = "mu") %>%
+  dag_node(descr = "water and shade slope", label = "bws",
+           rhs = normal(0, 0.25),
+           child = "mu")
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE)
+
+summary(draws_df)
+
 ############# Statistical Rethinking - Chapter 11- Chimpanzees model (m11.3)
 ######## RUN IN 36 SECONDS for NUTS and 21 SECONDS for HMC ############
 
@@ -542,3 +591,7 @@ graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS 
 
 summary(draws_df)
+
+
+
+ 
