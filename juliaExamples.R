@@ -501,4 +501,44 @@ graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS
 summary(draws_df)
 
 
+######## Eight Schools Example from Bayesian Data Analysis #############
+########  RUN IN 6.6 SECONDS FOR NUTS, 2.4 SECONDS FOR THE SECOND TIME 
 
+## data  
+schools_dat <- data.frame(y = c(28,  8, -3,  7, -1,  1, 18, 12),
+                          sigma = c(15, 10, 16, 11,  9, 11, 10, 18), schoolName = paste0("School",1:8))
+y <- schools_dat$y
+sigma <- schools_dat$sigma
+schoolName = schools_dat$schoolName
+
+graph = dag_create() %>%
+  dag_node("Treatment Effect","y",
+           rhs = normal(theta, sigma),
+           data = y) %>%
+  dag_node("Std Error of Effect Estimates","sigma",
+           data = sigma,
+           child = "y") %>%
+  dag_node("Exp. Treatment Effect","theta",
+           child = "y",
+           rhs = avgEffect + schoolEffect) %>%
+  dag_node("Pop Treatment Effect","avgEffect",
+           child = "theta",
+           rhs = normal(0,30)) %>%
+  dag_node("School Level Effects","schoolEffect",
+           rhs = normal(0,30),
+           child = "theta") %>%
+  dag_plate("School Name","school",
+            nodeLabels = "schoolEffect",
+            data = schoolName,
+            addDataNode = TRUE)
+
+dag_plate("Observation","i",
+          nodeLabels = c("sigma","y","theta")) %>%
+  
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS 
+
+summary(draws_df)
