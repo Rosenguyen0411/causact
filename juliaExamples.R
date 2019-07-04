@@ -403,3 +403,102 @@ graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS
 
 summary(draws_df)
 
+
+
+############# Statistical Rethinking - Chapter 11 - Kline model (m11.10),
+#### RUN IN 10.2 SECONDS FOR NUTS #########
+
+# data
+library(rethinking)
+data(Kline)
+d <- Kline
+
+log_pop <- log(d$population)
+contact_high <- ifelse( d$contact=="high" , 1 , 0 )
+total_tools <- d$total_tools
+
+
+graph = dag_create() %>%
+  dag_node(descr = "Total Number of Tools", label = "total_tools",
+           rhs = poisson(lambda),
+           data = total_tools) %>%
+  dag_node(descr = "Tool Rate", label = "lambda",
+           rhs = exp(log_lambda),
+           child = "total_tools") %>%
+  dag_node(descr = "Log Tool Rate", label = "log_lambda",
+           rhs = a + bp * log_pop + bc * contact_high + bpc * contact_high * log_pop,
+           child = "lambda")  %>%
+  dag_node(descr = "Log of Population", label = "log_pop",
+           data = log_pop,
+           child = "log_lambda") %>%
+  dag_node(descr = "Contact Rate", label = "contact_high",
+           data = contact_high,
+           child = "log_lambda") %>%
+  dag_node(descr = "Intercept", label = "a",
+           rhs = normal(0, 100),
+           child = "log_lambda") %>%
+  dag_node(descr = "Log Population Slope", label = "bp",
+           rhs = normal(0, 1),
+           child = "log_lambda") %>%
+  dag_node(descr = "Contact Rate Slope", label = "bc",
+           rhs = normal(0, 1),
+           child = "log_lambda") %>%
+  dag_node(descr = "Log Population and Contact Rate Slope", label = "bpc",
+           rhs = normal(0, 1),
+           child = "log_lambda") 
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS 
+
+summary(draws_df)
+
+
+############# Statistical Rethinking - Chapter 13 - Reedfrogs model (m13.2), 50 parameters
+################## RUN from 60 to 150 SECONDS FOR NUTS ################
+
+library(rethinking)
+data(reedfrogs)
+d <- reedfrogs
+tank <- 1:nrow(d)
+surv <- d$surv
+density <- d$density
+
+
+graph = dag_create() %>%
+  dag_node(descr = "Number of Frog Survive", label = "surv",
+           rhs = binomial(density, p),
+           data = surv) %>%
+  dag_node(descr = "Survive Rate", label = "p",
+           rhs = ilogit(logit_p),
+           child = "surv") %>%
+  dag_node(descr = "Logit Survive Rate", label = "logit_p",
+           rhs = a_tank,
+           child = "p")  %>%
+  dag_node(descr = "Pond Population", label = "density",
+           data = density,
+           child = "surv") %>%
+  dag_node(descr = "Intercept", label = "a_tank",
+           rhs = normal(a, sigma),
+           child = "logit_p") %>%
+  dag_node(descr = "Mean Survival Rate", label = "a",
+           rhs = normal(0, 1),
+           child = "a_tank") %>%
+  dag_node(descr = "Variation", label = "sigma",
+           rhs = exponential(1),
+           child = "a_tank") %>%
+  dag_plate(descr = "Tank Indicator", label = "tank",
+            nodeLabels = "a_tank",
+            data = tank,
+            addDataNode = TRUE)
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS 
+
+summary(draws_df)
+
+
+
