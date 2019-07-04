@@ -290,7 +290,7 @@ juliaRhsPriorComposition = function(graph) {
   operDF = graph$nodes_df %>%
     dplyr::filter(!is.na(rhs))
   
-  #& distr == FALSE
+  #& distr == FALSE graph$nodes_df$distr[nodePosition] == FALSE &
   
   if(nrow(operDF) > 0) { ##start if
   ## get the largest length of the data used as argument in operation
@@ -310,8 +310,7 @@ juliaRhsPriorComposition = function(graph) {
     for (i in 1:nrow(uniqueLengthDF)) {
       nodePosition = which(graph$nodes_df$rhsID == uniqueLengthDF$to[i])
       
-      graph$nodes_df$length[nodePosition] = ifelse(graph$nodes_df$distr[nodePosition] == FALSE &
-         graph$nodes_df$length[nodePosition] == 0, uniqueLengthDF$length[i], graph$nodes_df$length[nodePosition])
+      graph$nodes_df$length[nodePosition] = ifelse(graph$nodes_df$length[nodePosition] == 0, uniqueLengthDF$length[i], graph$nodes_df$length[nodePosition])
       }
     }
   }
