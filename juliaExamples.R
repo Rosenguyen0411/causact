@@ -18,7 +18,7 @@ julia_library(pkg_name = "MCMCChains")
 julia_library(pkg_name = "Distributions")
 julia_library(pkg_name = "DataFrames")
 julia_library(pkg_name = "StatsFuns")
-julia_library(pkg_name = "Statistics")
+julia_library(pkg_name = "DynamicHMC")
 
 
 library(causact)
@@ -27,7 +27,7 @@ library(greta)
 library(rethinking)
 
 ################ Simple coin flip example
-###### RUN IN 18 SECONDS FOR NUTS ###########
+###### RUN IN 18 SECONDS FOR NUTS, 12 SECONDS FOR DYNAMICNUTS ###########
 
 data = rbern(1000) # 1000 flips
 
@@ -40,6 +40,7 @@ graph = dag_create() %>%
            child = "d") 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS = TRUE)
 graph %>% dag_julia(HMC = TRUE)
 
@@ -47,7 +48,7 @@ summary(draws_df)
 
 
 ############ CAR EXAMPLE
-#########  RUN IN 35 SECONDS FOR NUTS ###########
+#########  RUN IN 35 SECONDS FOR NUTS, 31 SECONDS FOR DynamicNUTS ###########
 
 graph = dag_create() %>%
   dag_node(descr = "Get Card", label = "y",
@@ -62,10 +63,12 @@ graph = dag_create() %>%
             addDataNode = TRUE)
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS = TRUE)
 graph %>% dag_julia(HMC = TRUE)
 
 summary(draws_df)
+
 
 
 ############## Statistical Rethinking - Milk model (m5.7), linear regression of Kcal on neocortex and mass
@@ -109,6 +112,7 @@ graph = dag_create() %>%
            child = "mu")
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
@@ -154,6 +158,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
@@ -206,6 +211,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
@@ -255,6 +261,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) ## reject alot of proposal, big std => NUTS is better
 
@@ -305,6 +312,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
@@ -349,6 +357,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS
 
@@ -401,6 +410,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) 
 
@@ -447,6 +457,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS 
 
@@ -498,6 +509,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS 
 
@@ -505,7 +517,7 @@ summary(draws_df)
 
 
 ############# Statistical Rethinking - Chapter 13 - Reedfrogs model (m13.2), 50 parameters
-################## RUN from 60 to 150 SECONDS FOR NUTS ################
+################## RUN from 60 to 150 SECONDS FOR NUTS, 47 SECONDS FOR DYNAMICNUTS ################
 
 library(rethinking)
 data(reedfrogs)
@@ -544,6 +556,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+system.time(graph %>% dag_julia(DynamicNUTS = TRUE))
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS 
 
@@ -587,6 +600,7 @@ dag_plate("Observation","i",
 
 graph %>% dag_render()
 #graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS 
 
