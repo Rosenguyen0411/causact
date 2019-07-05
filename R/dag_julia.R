@@ -240,7 +240,7 @@ dag_julia<- function(graph,
   
   DynamicNUTScallSamplerStatement = paste0("#Choose one of these 3 following engine:\n","engine  =  julia_call(\"DynamicNUTS\", ", iterations, "L)   #CALL DynamicNUTS SAMPLER")
   
-  NUTScallSamplerStatement = paste0("engine  =  julia_call(\"NUTS\", ", iterations, "L,", rate,
+  NUTScallSamplerStatement = paste0("engine  =  julia_call(\"Turing.NUTS\", ", iterations, "L,", rate,
            ")   #CALL NUTS SAMPLER")
   
   HMCcallSamplerStatement = paste0("engine  =  julia_call(\"HMC\", ", iterations, "L,", eps,",", tau, "L)   #CALL HMC SAMPLER")
