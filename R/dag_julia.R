@@ -44,6 +44,7 @@
 #' @importFrom greta mcmc model as_data
 #' @export
 dag_julia<- function(graph,
+                     DynamicNUTS = FALSE,
                       NUTS = FALSE,
                       HMC = FALSE,
                       meaningfulLabels = TRUE,
@@ -237,8 +238,9 @@ dag_julia<- function(graph,
                           paste0(lhsNodesDF, collapse = ","),
                           ")   #CALL MODEL")
   
+  DynamicNUTScallSamplerStatement = paste0("#Choose one of these 3 following engine:\n","engine  =  julia_call(\"DynamicNUTS\", ", iterations, "L)   #CALL DynamicNUTS SAMPLER")
   
-  NUTScallSamplerStatement = paste0("#Choose one of these 2 following engine:\n","engine  =  julia_call(\"NUTS\", ", iterations, "L,", rate,
+  NUTScallSamplerStatement = paste0("engine:\n","engine  =  julia_call(\"NUTS\", ", iterations, "L,", rate,
            ")   #CALL NUTS SAMPLER")
   HMCcallSamplerStatement = paste0("engine  =  julia_call(\"HMC\", ", iterations, "L,", eps,",", tau, "L)   #CALL HMC SAMPLER")
   
@@ -256,9 +258,20 @@ dag_julia<- function(graph,
                      priorOpLikeStatements,
                      endStatement,
                      callModelStatement,
+                     DynamicNUTScallSamplerStatement,
                      NUTScallSamplerStatement,
                      HMCcallSamplerStatement,
                      samplingStatement)
+  
+  DynamicNUTScodeStatements = c(dataStatements,
+                         plateDataStatements,
+                         modelStatement,
+                         dimStatements,
+                         priorOpLikeStatements,
+                         endStatement,
+                         callModelStatement,
+                         DynamicNUTScallSamplerStatement,
+                         samplingStatement)
   
   NUTScodeStatements = c(dataStatements,
                          plateDataStatements,
@@ -288,6 +301,8 @@ dag_julia<- function(graph,
   
   ##EVALUATE CODE IN GLOBAL ENVIRONMENT
   ##make expression out of Code Statements
+  DynamicNUTScodeExpr = parse(text = (DynamicNUTScodeStatements))
+  
   NUTScodeExpr = parse(text = (NUTScodeStatements))
 
   HMCcodeExpr = parse(text = (HMCcodeStatements))
@@ -295,6 +310,7 @@ dag_julia<- function(graph,
   #codeExpr = parse(text = codeStatements)
   
   ##eval expression
+  if(DynamicNUTS == TRUE) {eval(DynamicNUTScodeExpr, envir = globalenv())}
   if(NUTS == TRUE) {eval(NUTScodeExpr, envir = globalenv())}
   if(HMC == TRUE) {eval(HMCcodeExpr, envir = globalenv())}
   
