@@ -89,6 +89,7 @@ dag_node <- function(graph,
     rhsID = NA   ##signals that rhs is blank
   } else {
     rhsList = rhsDecomp(!!rhsExpr)  ## get distr flag,
+    
     #fcn name (i.e. formula string for formula),
     #paramDF (distr-TRUE only),argDF (distr or formula)
 
@@ -127,6 +128,8 @@ dag_node <- function(graph,
   }
 
  length <- length(rlang::eval_tidy(dataQuo)) # Rose: add length of the data
+ 
+ dataWithNA <- ifelse(sum(is.na(rlang::eval_tidy(dataQuo))) == length(rlang::eval_tidy(dataQuo)), TRUE, ifelse(sum(is.na(rlang::eval_tidy(dataQuo))) == 0, FALSE, stop("Data can not contain both missing and non-missing data"))) # Rose: add data with NA column, to later change from R's NA to Julia's missing
 
   ## initialize nodeDF info for this node(s)
   nodeIDstart = max(graph$nodes_df$id,0) + 1
@@ -143,7 +146,8 @@ dag_node <- function(graph,
       obs = obs,
       rhsID = rhsID,
       distr = rhsDistr,
-      length = length,
+      length = length, # Rose, add length column
+      dataWithNA = dataWithNA, # Rose, add data with NA column
       stringsAsFactors = FALSE)
 
 
