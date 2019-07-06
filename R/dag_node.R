@@ -129,7 +129,7 @@ dag_node <- function(graph,
 
  length <- length(rlang::eval_tidy(dataQuo)) # Rose: add length of the data
  
- dataWithNA <- ifelse(sum(is.na(rlang::eval_tidy(dataQuo))) == length(rlang::eval_tidy(dataQuo)), TRUE, ifelse(sum(is.na(rlang::eval_tidy(dataQuo))) == 0, FALSE, stop("Data can not contain both missing and non-missing data"))) # Rose: add data with NA column, to later change from R's NA to Julia's missing
+ dataWithNA <- ifelse(!is.na(dataString) & sum(is.na(rlang::eval_tidy(dataQuo))) == length(rlang::eval_tidy(dataQuo)), TRUE, ifelse(sum(is.na(rlang::eval_tidy(dataQuo))) == 0, FALSE, stop("Data can not contain both missing and non-missing data"))) # Rose: add data with NA column, to later change from R's NA to Julia's missing
 
   ## initialize nodeDF info for this node(s)
   nodeIDstart = max(graph$nodes_df$id,0) + 1
