@@ -108,9 +108,9 @@ dag_julia<- function(graph,
   lhsNodesDF = nodeDF %>%
     dplyr::filter(obs == TRUE | !is.na(data)) %>%
     dplyr::filter(!(label %in% plateDF$indexLabel)) %>%
-    dplyr::mutate(codeLine = paste0(auto_label,
-                                    " <- ",
-                                    data)) %>%
+    dplyr::mutate(codeLine =ifelse(dataWithNA, 
+                                   paste0(auto_label, "= julia_eval(\"missings(", length, ")\", need_return = \"Julia\") \n"), 
+                                   paste0(auto_label, " = ", data))) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #DATA"))
   
   ###Aggregate Code Statements for DATA
