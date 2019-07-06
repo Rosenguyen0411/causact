@@ -556,7 +556,7 @@ graph = dag_create() %>%
 
 graph %>% dag_render()
 #graph %>% dag_greta()
-system.time(graph %>% dag_julia(DynamicNUTS = TRUE))
+graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS 
 
@@ -606,6 +606,26 @@ graph %>% dag_julia(HMC= TRUE) ## did not converge => use NUTS
 
 summary(draws_df)
 
+############### Missing data model #################
+########### Dynamics NUTS does not work with discrete missing variable (only continuous missing variable), NUTS and HMC can work with both ##############
 
+x = rep(NA, 30)
 
+graph = dag_create() %>%
+  dag_node("Missing Data","x",
+           rhs = normal(m, s),
+           data = x) %>%
+  dag_node("mean","m",
+           rhs = beta(2,2),
+           child = "x") %>%
+  dag_node("Variation", "s",
+           rhs = cauchy(0, 1, truncation = c(0, Inf)),
+           child = "x")
  
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE)
+
+summary(draws_df)
