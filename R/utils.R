@@ -389,13 +389,13 @@ juliaRhsPriorComposition = function(graph) {
 ### Rose: JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
 juliaRhsOperationComposition = function(graph) {
   pointWise = c("\\+" = "\\.+",
-                   "\\*" = "\\.*",
+                "^\\*" = "\\.*",
+                 "\\%" = "",
                    "-" = ".-",
                    "/" = "./",
                    "\\^" = "\\.^",
                   "exp" = "exp.",
                    "ilogit" = "logistic.",
-                   "\\%\\*\\%" = "\\*",
                    "diag" = "Diagonal")
   
   ## replace the input rhs into pointWise rhs
