@@ -395,7 +395,7 @@ juliaRhsOperationComposition = function(graph) {
                    "\\^" = "\\.^",
                   "exp" = "exp.",
                    "ilogit" = "logistic.",
-                   "%*%" = "*",
+                   "\\%\\*\\%" = "\\*",
                    "diag" = "Diagonal")
   
   ## replace the input rhs into pointWise rhs
