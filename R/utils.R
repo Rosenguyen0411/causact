@@ -362,10 +362,11 @@ juliaRhsPriorComposition = function(graph) {
     dplyr::mutate(prior_rhs = paste0(rhs,"(",args,
                                      ")")) %>%
     dplyr::ungroup() %>%
-    select(id,prior_rhs, rhsID)
+    dplyr::select(id,prior_rhs, rhsID)
   
   ## Change first letter of distribution to upper case
   auto_rhsDF = auto_rhsDF %>%
+    dplyr::mutate(prior_rhs = ifelse(substr(prior_rhs, 1, 19) == "multivariate_normal", paste0("MvNormal", substr(prior_rhs, 20, nchar(prior_rhs))), prior_rhs)) %>% # change from multivariate_normal (greta) to MvNormal(Julia)
     dplyr::mutate(prior_rhs = paste0(toupper(substr(prior_rhs, 1, 1)), substr(prior_rhs, 2, nchar(prior_rhs))))
   
   ## keep node with truncation input
