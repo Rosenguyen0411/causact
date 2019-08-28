@@ -394,7 +394,9 @@ juliaRhsOperationComposition = function(graph) {
                    "/" = "./",
                    "\\^" = "\\.^",
                   "exp" = "exp.",
-                   "ilogit" = "logistic.")
+                   "ilogit" = "logistic.",
+                   "%*%" = "*",
+                   "diag" = "Diagonal")
   
   ## replace the input rhs into pointWise rhs
   graph$nodes_df$rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
