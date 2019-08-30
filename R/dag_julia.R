@@ -166,8 +166,12 @@ dag_julia<- function(graph,
   #update auto_rhs to use cbind for R indexing if there is a comma in it
   
   ######## NEW lhsNodesDF
-  lhsNodesDF = nodeDF %>%
-    dplyr::filter(distr == TRUE & obs == FALSE) %>%
+  # list of multivariate distributions in Greta that have a Julia version
+  multivariate = c("multivariate_normal", "wishart", "multinomial", "categorical", "dirichlet", "dirichlet_multinomial")
+  
+  #### lhsNodesDF for Univariate Distributions
+  lhsNodesDF_univariate = nodeDF %>%
+    dplyr::filter(distr == TRUE & obs == FALSE & !(rhs %in% multivariate)) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(needPaded = ifelse(nrow(plateDimDF) > 0 & id %in% plateNodeDF$nodeID, 1, 0)) %>%
     dplyr::rowwise() %>%
@@ -176,6 +180,23 @@ dag_julia<- function(graph,
                                     paste0(abbrevLabelPad(auto_label)," = Array{Float64}(undef,1)\n",abbrevLabelPad(auto_label)," ~ ", auto_rhs))) %>% 
     as.data.frame() %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), " #PRIOR"))
+  
+  #### lhsNodesDF for Multivariate Distributions {multivariate_normal}, length of mean is # of row, # of plate = # of column.
+  lhsNodesDF_multivariate_normal = nodeDF %>%
+    dplyr::filter(distr == TRUE & obs == FALSE & (rhs == "multivariate_normal")) %>%
+    dplyr::left_join(argDF[argDF$argName== "mean", c(1,2,4)], by = c("id" = "rhsID")) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(needPaded = ifelse(nrow(plateDimDF) > 0 & id %in% plateNodeDF$nodeID, 1, 0)) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(codeLine = ifelse(needPaded > 0,
+                                    paste0(abbrevLabelPad(auto_label)," = Matrix{Float64}(undef, ( length(",argValue, "),", plateDimDF$indexLabel[plateNodeDF$indexID[which(plateNodeDF$nodeID == id)]], "_dim)\n", abbrevLabelPad(auto_label)," ~ ", "[" , auto_rhs, "]\n"),
+                                    paste0(abbrevLabelPad(auto_label)," = Matrix{Float64}(undef, ( length(",argValue, "),", "1)\n",abbrevLabelPad(auto_label)," ~ ", auto_rhs))) %>% 
+    as.data.frame() %>%
+    dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), " #PRIOR"))
+  
+  #### Merge lhsNodesDF_univariate and lhsNodesDF_multivariate_
+  lhsNodesDF = lhsNodesDF_univariate %>%
+    dplyr::full_join(lhsNodesDF_multivariate_normal)
   
   
   ###Aggregate Code Statements for PRIOR
