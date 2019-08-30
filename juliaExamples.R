@@ -594,8 +594,7 @@ graph = dag_create() %>%
             data = schoolName,
             addDataNode = TRUE)
 
-dag_plate("Observation","i",
-          nodeLabels = c("sigma","y","theta")) %>%
+
   
 
 graph %>% dag_render()
@@ -629,3 +628,92 @@ graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
 
 summary(draws_df)
+
+
+######### Statistical Rethinking - Chapter 13 - Cafe Model 13.1 -The simple multivariate model without LKJ prior
+
+##### Data
+a <- 3.5 # average morning wait time 14.1
+b <- (-1) # average difference afternoon wait time
+sigma_a <- 1 # std dev in intercepts
+sigma_b <- 0.5 # std dev in slopes
+rho <- (-0.7) # correlation between intercepts and slopes
+Mu <- c( a , b )
+
+sigmas <- c(sigma_a,sigma_b) # standard deviations
+Rho <- matrix( c(1,rho,rho,1) , nrow=2 ) # correlation matrix
+# now matrix multiply to get covariance matrix
+Sigma <- diag(sigmas) %*% Rho %*% diag(sigmas)
+N_cafes <- 20
+library(MASS)
+set.seed(5) # used to replicate example
+vary_effects <- mvrnorm( N_cafes , Mu , Sigma )
+a_cafe <- vary_effects[,1] 
+b_cafe <- vary_effects[,2]
+N_visits <- 10 
+afternoon <- rep(0:1,N_visits*N_cafes/2)
+cafe_id <- rep( 1:N_cafes , each=N_visits )
+mu <- a_cafe[cafe_id] + b_cafe[cafe_id]*afternoon
+sigma <- 0.5 # std dev within cafes
+wait <- rnorm( N_visits*N_cafes , mu , sigma )
+d <- data.frame( cafe=cafe_id , afternoon=afternoon , wait=wait )
+
+
+graph = dag_create() %>%
+  dag_node(descr = "Wait time", label = "W",
+           rhs = normal(wait_avg, sigma),
+           data = wait) %>%
+  dag_node(descr = "STD of wait time", label = "sigma",
+           rhs = cauchy(0, 1, truncation = c(0, Inf)),
+           child = "W") %>%
+  dag_node(descr = "Average wait time", label = "wait_avg",
+           rhs = a_cafe + b_cafe * afternoon,
+           child = "W")  %>%
+  dag_node(descr = "Intercept", label = "a_cafe",
+           rhs = v_e[1,],
+           child = "wait_avg") %>%
+  dag_node(descr = "Slope", label = "b_cafe",
+           rhs = v_e[2,],
+           child = "wait_avg") %>%
+  dag_node(descr = "Varying Effect", label = "v_e",
+           rhs = multivariate_normal(Sigma = S, mean = v_e),
+           child = c("a_cafe", "b_cafe")) %>%
+  dag_node(descr = "Varying Effect Average", label = "varying_avg",
+           rhs = c(a, b),
+           child = "v_e") %>%
+  dag_node(descr = "Average Intercept", label = "a",
+           rhs = normal(0, 10),
+           child = "varying_avg") %>%
+  dag_node(descr = "Average Slope", label = "b",
+           rhs = normal(0, 10),
+           child = "varying_avg") %>%
+  dag_node(descr = "Varying Effect Covariance", label = "S",
+           rhs = diag(Sigmas) %*% Rho %*% diag(Sigmas),
+           child = "v_e") %>%
+  dag_node("Uncorr Std Devs","Sigmas",
+           child = "S",
+           rhs = c(sig_a,sig_b)) %>%
+  dag_node(descr = "STD of intercept", label = "sig_a",
+           rhs = cauchy(0, 1, truncation = c(0, Inf)),
+           child = "Sigmas") %>%
+  dag_node(descr = "STD of slope", label = "sig_b",
+           rhs = cauchy(scale = 1, location = 0, truncation = c(0, Inf)),
+           child = "Sigmas") %>%
+  dag_node(descr = "Correlation matrix", label = "Rho",
+           rhs = matrix( c(1,-0.7,-0.7,1) , nrow=2 ),
+           child = "Sigmas") %>%
+  dag_plate("Cafes","cafe",
+            nodeLabels = c("a_cafe","b_cafe", "v_e"),
+            data = d$cafe,
+            addDataNode = TRUE) %>%
+  dag_node(descr = "Afternoon Indicator", label = "afternoon",
+           data = afternoon,
+           child = "wait_avg")
+  
+
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE)
