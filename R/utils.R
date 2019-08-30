@@ -341,6 +341,7 @@ juliaRhsPriorComposition = function(graph) {
   
   ## create label for the rhs for these nodes
   auto_rhsDF = nodeDF %>% dplyr::left_join(argDF, by = "rhsID") %>%
+    dplyr::mutate(argValue = ifelse(rhs == "multivariate_normal" & argName == "Sigma", paste0("Symmetric(", argValue, ")"), argValue)) %>% ## add function Symmetric() to ensure that Covariance matrix is symmetric 
     dplyr::mutate(argValue = ifelse(is.na(argDimLabels),argValue,
                                     paste0(argValue,"[",
                                            ifelse(stringr::str_detect(argDimLabels,","),
@@ -367,6 +368,7 @@ juliaRhsPriorComposition = function(graph) {
   ## Change first letter of distribution to upper case
   auto_rhsDF = auto_rhsDF %>%
     dplyr::mutate(prior_rhs = ifelse(substr(prior_rhs, 1, 19) == "multivariate_normal", paste0("MvNormal", substr(prior_rhs, 20, nchar(prior_rhs))), prior_rhs)) %>% # change from multivariate_normal (greta) to MvNormal(Julia)
+    dplyr::mutate(prior_rhs = ifelse(substr(prior_rhs, 1, 21) == "dirichlet_multinomial", paste0("DirichletMultinomial", substr(prior_rhs, 22, nchar(prior_rhs))), prior_rhs)) %>% # change from dirichlet_multinomial (greta) to DirichletMultinomial(Julia)
     dplyr::mutate(prior_rhs = paste0(toupper(substr(prior_rhs, 1, 1)), substr(prior_rhs, 2, nchar(prior_rhs))))
   
   ## keep node with truncation input
@@ -412,7 +414,7 @@ juliaRhsOperationComposition = function(graph) {
   ## get nodes with argDimLabels
   argDimLabelNodes = graph$arg_df %>%
     dplyr::filter(!is.na(argDimLabels)) %>%
-    select(rhsID,argName,argDimLabels)
+    dplyr::select(rhsID,argName,argDimLabels)
   
   ## only do if there arguments needing dim labels added
   if(nrow(argDimLabelNodes) > 0) { ##start if
