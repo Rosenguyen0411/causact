@@ -414,7 +414,7 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::filter(!is.na(needRpadded)) %>%
     dplyr::select(id, label, needRpadded) %>%
     tidyr::separate(needRpadded, into = c("parent", "rest"), sep = "\\[", remove = FALSE) %>%
-    dplyr::mutate(padded = paste0("@rput ", parent, " \n ", label, " = rcopy(R\"",label, " = ", needRpadded,"\")")) %>%
+    dplyr::mutate(padded = paste0("@rput ", parent, " \n ", label, " = rcopy(R\\\"", label, " = ", needRpadded,"\\\")")) %>%
     dplyr::select(id, padded)
   
   ### matrix multiply %*% operation 
@@ -424,12 +424,12 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::filter(!is.na(needRpadded)) %>%
     dplyr::select(id, label, needRpadded) %>%
     dplyr::left_join(graph$edges_df[,c(2,3)], c("id" = "to")) %>%
-    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0("rcopy(R\"", needRpadded, "\") "))) %>%
+    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0("rcopy(R\\\"", needRpadded, "\\\") "))) %>%
     dplyr::left_join(graph$nodes_df[,c(1,2)], c("from" = "id")) %>%
     dplyr::group_by(id) %>%
     dplyr::mutate(parent = paste(label.y, collapse=" ")) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\"",label.x, " = ", needRpadded,"\")"))) %>%
+    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\\\"",label.x, " = ", needRpadded,"\\\")"))) %>%
     dplyr::distinct(id, padded)
   
   ### combine operation: {matrix(), c(), cbind(), rbind()}
@@ -438,12 +438,12 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::filter(!is.na(needRpadded)) %>%
     dplyr::select(id, label, needRpadded) %>%
     dplyr::left_join(graph$edges_df[,c(2,3)], c("id" = "to")) %>%
-    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0(label, " = rcopy(R\"", needRpadded, "\") "))) %>%
+    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0(label, " = rcopy(R\\\"", needRpadded, "\\\") "))) %>%
     dplyr::left_join(graph$nodes_df[,c(1,2)], c("from" = "id")) %>%
     dplyr::group_by(id) %>%
     dplyr::mutate(parent = paste(label.y, collapse=" ")) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\"",label.x, " = ", needRpadded,"\")"))) %>%
+    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\\\"",label.x, " = ", needRpadded,"\\\")"))) %>%
     dplyr::distinct(id, padded)
   
   ## replace the input rhs into pointWise rhs
