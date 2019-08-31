@@ -189,8 +189,8 @@ dag_julia<- function(graph,
     dplyr::mutate(needPaded = ifelse(nrow(plateDimDF) > 0 & id %in% plateNodeDF$nodeID, 1, 0)) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(codeLine = ifelse(needPaded > 0,
-                                    paste0(abbrevLabelPad(auto_label)," = Matrix{Float64}(undef, ( length(",argValue, "),", plateDimDF$indexLabel[plateNodeDF$indexID[which(plateNodeDF$nodeID == id)]], "_dim)\n", abbrevLabelPad(auto_label)," ~ ", "[" , auto_rhs, "]\n"),
-                                    paste0(abbrevLabelPad(auto_label)," = Matrix{Float64}(undef, ( length(",argValue, "),", "1)\n",abbrevLabelPad(auto_label)," ~ ", auto_rhs))) %>% 
+                                    paste0(abbrevLabelPad(auto_label)," = Matrix{Float64}(undef, ( length(",argValue, "),", plateDimDF$indexLabel[plateNodeDF$indexID[which(plateNodeDF$nodeID == id)]], "_dim))\n", abbrevLabelPad(auto_label)," ~ ", "[" , auto_rhs, "]\n"),
+                                    paste0(abbrevLabelPad(auto_label)," = Matrix{Float64}(undef, ( length(",argValue, "),", "1))\n",abbrevLabelPad(auto_label)," ~ ", auto_rhs))) %>% 
     as.data.frame() %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), " #PRIOR"))
   
