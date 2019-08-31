@@ -392,23 +392,84 @@ juliaRhsPriorComposition = function(graph) {
 ### Rose: JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
 juliaRhsOperationComposition = function(graph) {
   pointWise = c("\\+" = "\\.+",
-                "^\\*" = "\\.*",
-                 "\\%" = "",
-                   "-" = ".-",
-                   "/" = "./",
-                   "\\^" = "\\.^",
-                  "exp" = "exp.",
-                   "ilogit" = "logistic.",
-                   "diag" = "Diagonal")
+                "\\*" = "\\.*",
+                "-" = ".-",
+                "/" = "./",
+                "\\^" = "\\.^",
+                "exp" = "exp.",
+                "ilogit" = "logistic.",
+                "diag" = "Diagonal")
+  
+  #### insert indicator 1/0 for special R operation: {matrix(), c(), [], cbind(), rbind(), %*%} that need to be changed to Julia objects using RCall package: @rput and rcopy
+  
+  graph$nodes_df = graph$nodes_df %>%
+    dplyr::mutate(needRpadded = stringr::str_extract(rhs, c("matrix\\(.*\\)|.*\\[.*\\]|cbind\\(.*\\)|rbind\\(.*\\)|c\\(.*\\)|.*%\\*%.*"))) %>%
+    dplyr::mutate(RpaddedIndicator = ifelse(is.na(needRpadded), 0, 1)) %>%
+    dplyr::select(-needRpadded)
+  
+  ### select [] operation 
+  
+  rhs_R_select_operation = graph$nodes_df %>%
+    dplyr::mutate(needRpadded = stringr::str_extract(rhs, ".*\\[.*\\]")) %>%
+    dplyr::filter(!is.na(needRpadded)) %>%
+    dplyr::select(id, label, needRpadded) %>%
+    tidyr::separate(needRpadded, into = c("parent", "rest"), sep = "\\[", remove = FALSE) %>%
+    dplyr::mutate(padded = paste0("@rput ", parent, " \n ", label, " = rcopy(R\"",label, " = ", needRpadded,"\")")) %>%
+    dplyr::select(id, padded)
+  
+  ### matrix multiply %*% operation 
+  
+  rhs_R_multiply_operation = graph$nodes_df %>%
+    dplyr::mutate(needRpadded = stringr::str_extract(rhs, ".*%\\*%.*")) %>%
+    dplyr::filter(!is.na(needRpadded)) %>%
+    dplyr::select(id, label, needRpadded) %>%
+    dplyr::left_join(graph$edges_df[,c(2,3)], c("id" = "to")) %>%
+    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0("rcopy(R\"", needRpadded, "\") "))) %>%
+    dplyr::left_join(graph$nodes_df[,c(1,2)], c("from" = "id")) %>%
+    dplyr::group_by(id) %>%
+    dplyr::mutate(parent = paste(label.y, collapse=" ")) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\"",label.x, " = ", needRpadded,"\")"))) %>%
+    dplyr::distinct(id, padded)
+  
+  ### combine operation: {matrix(), c(), cbind(), rbind()}
+  rhs_R_combine_operation = graph$nodes_df %>%
+    dplyr::mutate(needRpadded = stringr::str_extract(rhs, c("matrix\\(.*\\)|cbind\\(.*\\)|rbind\\(.*\\)|c\\(.*\\)"))) %>%
+    dplyr::filter(!is.na(needRpadded)) %>%
+    dplyr::select(id, label, needRpadded) %>%
+    dplyr::left_join(graph$edges_df[,c(2,3)], c("id" = "to")) %>%
+    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0(label, " = rcopy(R\"", needRpadded, "\") "))) %>%
+    dplyr::left_join(graph$nodes_df[,c(1,2)], c("from" = "id")) %>%
+    dplyr::group_by(id) %>%
+    dplyr::mutate(parent = paste(label.y, collapse=" ")) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\"",label.x, " = ", needRpadded,"\")"))) %>%
+    dplyr::distinct(id, padded)
   
   ## replace the input rhs into pointWise rhs
   graph$nodes_df$rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
                               stringr::str_replace_all(graph$nodes_df$rhs, pointWise),
                               graph$nodes_df$rhs) 
-                                  
+  
+  
+  ## combine the R operation DFs
+  special_operations = rhs_R_select_operation %>%
+    dplyr::full_join(rhs_R_combine_operation) %>%
+    dplyr::full_join(rhs_R_multiply_operation)
+  
+  ## merge back to nodes_df
+  graph$nodes_df = graph$nodes_df %>%
+    dplyr::left_join(special_operations, by = "id") %>%
+    dplyr::mutate(rhs = ifelse(is.na(padded), rhs, padded)) %>%
+    dplyr::select(-padded)
+  
+  
+  ## update auto_rhs column
   graph$nodes_df$auto_rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
                                    graph$nodes_df$rhs,
                                    graph$nodes_df$auto_rhs)
+  
+  
   
   ## update auto_rhs with dimensioned formulas
   ## get nodes with argDimLabels
@@ -420,8 +481,10 @@ juliaRhsOperationComposition = function(graph) {
   if(nrow(argDimLabelNodes) > 0) { ##start if
     
     for(i in 1:nrow(argDimLabelNodes)){
+      
       ### find index of node with matching rhsID
       nodePosition = which(graph$nodes_df$rhsID == argDimLabelNodes$rhsID[i])
+      
       ### replace the string if it is a formula
       if(graph$nodes_df$distr[nodePosition] == FALSE &
          !is.na(graph$nodes_df$auto_rhs[nodePosition])) {
