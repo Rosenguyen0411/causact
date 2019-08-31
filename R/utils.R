@@ -390,16 +390,16 @@ juliaRhsPriorComposition = function(graph) {
 }  
 
 ### Rose: JULIA -  if formula grab rhs, add dimLabels, and output in auto_rhs
-juliaRhsOperationComposition = function(graph) {
-  pointWise = c("\\+" = "\\.+",
-                " [A-z0-9_]\\* [A-z0-9_]" = "\\.*",
-                "[^A-z0-9_]\\*[^A-z0-9_]" = "\\*",
-                "-" = ".-",
-                "/" = "./",
-                "\\^" = "\\.^",
-                "exp" = "exp.",
-                "ilogit" = "logistic.",
-                "diag" = "Diagonal")
+pointWise = c("\\+" = "\\.+",
+              "[^%]\\*" = " \\.*",
+              "[%]\\*[%]" = "\\*",
+              "-" = ".-",
+              "/" = "./",
+              "\\^" = "\\.^",
+              "exp" = "exp.",
+              "ilogit" = "logistic.",
+              "diag" = "Diagonal")
+
   
   #### insert indicator 1/0 for special R operation: {matrix(), c(), cbind(), rbind()} that need to be changed to Julia objects using RCall package: @rput and rcopy
   
