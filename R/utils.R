@@ -133,7 +133,7 @@ rhsDecomp = function(rhs) {
 
   ## handle cases where just distribution name is supplied
   ## if function in greta namespace, then assume distr
-  notDistrFunctions = c("%*%","eigen","iprobit","ilogit","colMeans","apply","abind","icloglog","icauchit","log1pe","imultilogit")
+  notDistrFunctions = c("%*%","eigen","iprobit","ilogit","colMeans","apply","abind","icloglog","icauchit","log1pe","imultilogit", "diag") # Rose add "diag"
   
 
   if (is.symbol(distExpr)) {
