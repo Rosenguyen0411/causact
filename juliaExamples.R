@@ -19,6 +19,7 @@ julia_library(pkg_name = "Distributions")
 julia_library(pkg_name = "DataFrames")
 julia_library(pkg_name = "StatsFuns")
 julia_library(pkg_name = "DynamicHMC")
+julia_library(pkg_name = "RCall")
 
 
 library(causact)
@@ -676,7 +677,7 @@ graph = dag_create() %>%
            rhs = v_e[2,],
            child = "wait_avg") %>%
   dag_node(descr = "Varying Effect", label = "v_e",
-           rhs = multivariate_normal(Sigma = S, mean = v_e),
+           rhs = multivariate_normal(Sigma = S, mean = varying_avg),
            child = c("a_cafe", "b_cafe")) %>%
   dag_node(descr = "Varying Effect Average", label = "varying_avg",
            rhs = c(a, b),
@@ -688,20 +689,23 @@ graph = dag_create() %>%
            rhs = normal(0, 10),
            child = "varying_avg") %>%
   dag_node(descr = "Varying Effect Covariance", label = "S",
-           rhs = diag(Sigmas) %*% Rho %*% diag(Sigmas),
+           rhs = Sigmas %*% Rho %*% Sigmas,
            child = "v_e") %>%
   dag_node("Uncorr Std Devs","Sigmas",
            child = "S",
+           rhs = diag(Sigmas_vector)) %>%
+  dag_node("Uncorr Std Devs","Sigmas_vector",
+           child = "Sigmas",
            rhs = c(sig_a,sig_b)) %>%
   dag_node(descr = "STD of intercept", label = "sig_a",
            rhs = cauchy(0, 1, truncation = c(0, Inf)),
-           child = "Sigmas") %>%
+           child = "Sigmas_vector") %>%
   dag_node(descr = "STD of slope", label = "sig_b",
            rhs = cauchy(scale = 1, location = 0, truncation = c(0, Inf)),
-           child = "Sigmas") %>%
+           child = "Sigmas_vector") %>%
   dag_node(descr = "Correlation matrix", label = "Rho",
-           rhs = matrix( c(1,-0.7,-0.7,1) , nrow=2 ),
-           child = "Sigmas") %>%
+           rhs = matrix( c(1,(-0.7),(-0.7),1) , nrow=2 ),
+           child = "S") %>%
   dag_plate("Cafes","cafe",
             nodeLabels = c("a_cafe","b_cafe", "v_e"),
             data = d$cafe,
