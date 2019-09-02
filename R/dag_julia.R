@@ -184,7 +184,7 @@ dag_julia<- function(graph,
   #### lhsNodesDF for Multivariate Distributions {multivariate_normal}, length of mean is # of row, # of plate = # of column.
   lhsNodesDF_multivariate_normal = nodeDF %>%
     dplyr::filter(distr == TRUE & obs == FALSE & (rhs == "multivariate_normal")) %>%
-    dplyr::left_join(argDF[argDF$argName== "mean", c(1,2,4)], by = c("id" = "rhsID")) %>%
+    dplyr::left_join(argDF[argDF$argName== "mean", c(1,2,4)], by = "rhsID") %>%
     dplyr::rowwise() %>%
     dplyr::mutate(needPaded = ifelse(nrow(plateDimDF) > 0 & id %in% plateNodeDF$nodeID, 1, 0)) %>%
     dplyr::rowwise() %>%
