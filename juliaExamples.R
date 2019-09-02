@@ -721,3 +721,81 @@ graph %>% dag_render()
 graph %>% dag_julia(DynamicNUTS = TRUE)
 graph %>% dag_julia(NUTS= TRUE)
 graph %>% dag_julia(HMC= TRUE)
+
+######### Statistical Rethinking - Chapter 13 - Admission Model 13.3 -The model without LKJ prior, only work with fixed correlation coefficient
+library(rethinking)
+data(UCBadmit)
+d <- UCBadmit
+male <- ifelse( d$applicant.gender=="male" , 1 , 0 )
+dept_id <- coerce_index( d$dept )
+admit <- d$admit
+applications <- d$applications
+
+
+graph = dag_create() %>%
+  dag_node(descr = "Admission Decision", label = "admit",
+           rhs = binomial(applications, p),
+           data = admit) %>%
+  dag_node(descr = "Admit Probability", label = "p",
+           rhs = ilogit(logit_p),
+           child = "admit") %>%
+  dag_node(descr = "Logit Probability", label = "logit_p",
+           rhs = alpha_dept + beta_dept * male,
+           child = "p")  %>%
+  dag_node(descr = "Number of Applications", label = "applications",
+           data = applications,
+           child = "admit") %>%
+  dag_node(descr = "Male Indicator", label = "male",
+           data = male,
+           child = "logit_p") %>%
+  dag_node(descr = "Intercept", label = "alpha_dept",
+           rhs = v_e[1,],
+           child = "logit_p") %>%
+  dag_node(descr = "Slope", label = "beta_dept",
+           rhs = v_e[2,],
+           child = "logit_p") %>%
+  dag_node(descr = "Varying Effect", label = "v_e",
+           rhs = multivariate_normal(Sigma = S, mean = varying_avg),
+           child = c("alpha_dept", "beta_dept")) %>%
+  dag_node(descr = "Varying Effect Average", label = "varying_avg",
+           rhs = c(a, b),
+           child = "v_e") %>%
+  dag_node(descr = "Average Intercept", label = "a",
+           rhs = normal(0, 10),
+           child = "varying_avg") %>%
+  dag_node(descr = "Average Slope", label = "b",
+           rhs = normal(0, 1),
+           child = "varying_avg") %>%
+  dag_node(descr = "Varying Effect Covariance", label = "S",
+           rhs = Sigmas %*% Rho %*% Sigmas,
+           child = "v_e") %>%
+  dag_node("Uncorr Std Devs","Sigmas",
+           child = "S",
+           rhs = diag(Sigmas_vector)) %>%
+  dag_node("Uncorr Std Devs","Sigmas_vector",
+           child = "Sigmas",
+           rhs = c(sig_a,sig_b)) %>%
+  dag_node(descr = "STD of intercept", label = "sig_a",
+           rhs = cauchy(0, 1, truncation = c(0, Inf)),
+           child = "Sigmas_vector") %>%
+  dag_node(descr = "STD of slope", label = "sig_b",
+           rhs = cauchy(scale = 1, location = 0, truncation = c(0, Inf)),
+           child = "Sigmas_vector") %>%
+  dag_node(descr = "Correlation matrix", label = "Rho",
+           rhs = matrix( c(1, rho, rho,1) , nrow=2 ),
+           child = "S") %>%
+  dag_node(descr = "Correlation coefficient", label = "rho",
+           rhs = -0.5,
+           child = "Rho") %>%
+  dag_plate(descr = "Department Indicator", label = "dept_id",
+            nodeLabels = c("alpha_dept", "beta_dept", "v_e"),
+            data = dept_id,
+            addDataNode = TRUE)
+
+
+
+graph %>% dag_render()
+#graph %>% dag_greta()
+graph %>% dag_julia(DynamicNUTS = TRUE)
+graph %>% dag_julia(NUTS= TRUE)
+graph %>% dag_julia(HMC= TRUE)
