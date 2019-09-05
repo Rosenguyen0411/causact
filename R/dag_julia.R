@@ -210,9 +210,9 @@ dag_julia<- function(graph,
   ###OPERATION:  Create code for OPERATION lines
   lhsNodesDF = nodeDF %>%
     dplyr::filter(!is.na(rhs) & distr == FALSE) %>%
-    dplyr::mutate(codeLine = ifelse(RpaddedIndicator == 1, auto_rhs, paste0(abbrevLabelPad(auto_label),
+    dplyr::mutate(codeLine = paste0(abbrevLabelPad(auto_label),
                                     " = ",
-                                    auto_rhs))) %>%
+                                    auto_rhs)) %>%
     dplyr::mutate(codeLine = paste0(abbrevLabelPad(codeLine), "   #OPERATION"))
   
   ###Aggregate Code Statements for OPERATION
