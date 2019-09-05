@@ -365,7 +365,7 @@ graph %>% dag_julia(HMC= TRUE) ## very big std => use NUTS
 summary(draws_df)
 
 
-############# Statistical Rethinking - Chapter 11 - Chimpanzees model (m11.4), each intercept for each actor (7 actors)
+############# Statistical Rethinking - Chapter 11 - Chimpanzees model (m11.4), each intercept for each actor (7 actors) => Error with DynamicHMC but run with HMC/ NUTS
 
 ########### RUN FOR 90 SECONDS FOR NUTS AND 26 SECONDS FOR HMC ###########
 
@@ -704,7 +704,7 @@ graph = dag_create() %>%
            rhs = cauchy(scale = 1, location = 0, truncation = c(0, Inf)),
            child = "Sigmas_vector") %>%
   dag_node(descr = "Correlation matrix", label = "Rho",
-           rhs = matrix( c(1,(-0.7),(-0.7),1) , nrow=2 ),
+           rhs = matrix( c(1,-0.7,-0.7,1) , nrow=2 ),
            child = "S") %>%
   dag_plate("Cafes","cafe",
             nodeLabels = c("a_cafe","b_cafe", "v_e"),
@@ -782,10 +782,10 @@ graph = dag_create() %>%
            rhs = cauchy(scale = 1, location = 0, truncation = c(0, Inf)),
            child = "Sigmas_vector") %>%
   dag_node(descr = "Correlation matrix", label = "Rho",
-           rhs = matrix( c(1, rho, rho,1) , nrow=2 ),
+           rhs = matrix( c(1,rho,rho,1) , ncol = 2),
            child = "S") %>%
   dag_node(descr = "Correlation coefficient", label = "rho",
-           rhs = -0.5,
+           rhs = uniform(-0.7, 0.7),
            child = "Rho") %>%
   dag_plate(descr = "Department Indicator", label = "dept_id",
             nodeLabels = c("alpha_dept", "beta_dept", "v_e"),
