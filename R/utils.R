@@ -469,12 +469,12 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::filter(!is.na(needRpadded)) %>%
     dplyr::select(id, label, needRpadded) %>%
     dplyr::left_join(graph$edges_df[,c(2,3)], c("id" = "to")) %>%
-    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0(label, " = rcopy(R\"", needRpadded, "\") "))) %>%
+    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0(label, " = rcopy(R\\\"", needRpadded, "\\\") "))) %>%
     dplyr::left_join(graph$nodes_df[,c(1,2)], c("from" = "id")) %>%
     dplyr::group_by(id) %>%
     dplyr::mutate(parent = paste(label.y, collapse=" ")) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\"",label.x, " = ", needRpadded,"\")"))) %>%
+    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\\\"",label.x, " = ", needRpadded,"\\\")"))) %>%
     dplyr::distinct(id, padded)
   
   ## replace the input rhs into pointWise rhs
