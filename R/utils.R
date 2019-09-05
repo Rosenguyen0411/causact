@@ -442,6 +442,7 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::mutate(ncol = ifelse(is.na(ncol), length_number/nrow, ncol)) # calculate number of col of matrix if users did not supply
   
   padded = NULL
+  if(nrow(rhs_R_matrix_operation) > 0) {
   for (j in 1:nrow(rhs_R_matrix_operation)) { 
     padded[j] = "["
     
@@ -454,6 +455,7 @@ juliaRhsOperationComposition = function(graph) {
         padded[j] =  paste0(padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], "]") # if the end of matrix pad "]"
       }
     }
+  }
   }
   
   padded = data.frame(padded) # change to data frame
