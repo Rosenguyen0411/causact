@@ -401,6 +401,10 @@ juliaRhsOperationComposition = function(graph) {
                 "ilogit" = "logistic.",
                 "diag" = "Diagonal")
   
+  ### Check if special operation appear
+  length_select_op = sum(!is.na(stringr::str_extract(graph$nodes_df$rhs, ".*\\[.*\\]")))
+  length_matrix_op = sum(!is.na(stringr::str_extract(graph$nodes_df$rhs, "matrix\\(.*\\)")))
+  length_combine_op = sum(!is.na(stringr::str_extract(graph$nodes_df$rhs, c("cbind\\(.*\\)|rbind\\(.*\\)|^c\\(.*\\)"))))
   
   #### insert indicator 1/0 for special R operation: {c(), cbind(), rbind()} that need to be changed to Julia objects using RCall package: @rput and rcopy
   
@@ -410,7 +414,7 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::select(-needRpadded)
   
   ### select [,] operation need : 
-  
+  if(length_select_op > 0) { # if [,] did not appear then skip
   rhs_R_select_operation = graph$nodes_df %>%
     dplyr::mutate(needRpadded = stringr::str_extract(rhs, ".*\\[.*\\]")) %>%
     dplyr::filter(!is.na(needRpadded)) %>%
@@ -422,9 +426,12 @@ juliaRhsOperationComposition = function(graph) {
                                                                    ", ," = ",\\:,",
                                                                    ", \\]" = ",\\:\\]"))) %>%
     dplyr::select(id, padded)
+  }
   
   ### Matrix(c(), nrow = , ncol = ) operation
-  rhs_R_matrix_operation = graph$nodes_df %>%
+  if(length_matrix_op > 0) {# if matrix() did not appear then skip
+  
+    rhs_R_matrix_operation = graph$nodes_df %>%
     dplyr::mutate(needRpadded = stringr::str_extract(rhs, "matrix\\(.*\\)")) %>%
     dplyr::filter(!is.na(needRpadded)) %>%
     dplyr::select(id, label, needRpadded) %>%
@@ -442,8 +449,7 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::mutate(ncol = ifelse(is.na(ncol), length_number/nrow, ncol)) %>% # calculate number of col of matrix if users did not supply
     dplyr::mutate(padded = NA)
   
-  
-  if(nrow(rhs_R_matrix_operation) > 0) {
+  # loop over the number and insert suitable padd
   for (j in 1:nrow(rhs_R_matrix_operation)) { 
     rhs_R_matrix_operation$padded[j] = "["
     
@@ -457,12 +463,17 @@ juliaRhsOperationComposition = function(graph) {
       }
     }
   }
+    
+    rhs_R_matrix_operation = rhs_R_matrix_operation %>%
+      dplyr::select(id, padded) %>%
+      dplyr::as_tibble()
   }
   
-  rhs_R_matrix_operation = rhs_R_matrix_operation %>%
-    dplyr::select(id, padded) 
+
   
   ### combine operation: {c(), cbind(), rbind()}
+  if(length_combine_op > 0) {# if combine operation did not appear then skip
+  
   rhs_R_combine_operation = graph$nodes_df %>%
     dplyr::mutate(needRpadded = stringr::str_extract(rhs, c("cbind\\(.*\\)|rbind\\(.*\\)|^c\\(.*\\)"))) %>%
     dplyr::filter(!is.na(needRpadded)) %>%
@@ -475,6 +486,7 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::ungroup() %>%
     dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\\\"",label.x, " = ", needRpadded,"\\\")"))) %>%
     dplyr::distinct(id, padded)
+  }
   
   ## replace the input rhs into pointWise rhs
   graph$nodes_df$rhs = ifelse(is.na(graph$nodes_df$auto_rhs) & graph$nodes_df$distr == FALSE & !is.na(graph$nodes_df$rhs),
@@ -483,15 +495,33 @@ juliaRhsOperationComposition = function(graph) {
   
   
   ## combine the R operation DFs
-  special_operations = rhs_R_select_operation %>%
-    dplyr::full_join(rhs_R_combine_operation) %>%
-    dplyr::full_join(rhs_R_matrix_operation)
+  #special_operations = rhs_R_select_operation %>%
+    #dplyr::full_join(rhs_R_combine_operation) %>%
+    #dplyr::full_join(rhs_R_matrix_operation)
   
-  ## merge back to nodes_df
+  ## merge rhs_R_select_operation back to nodes_df
+  if (length_select_op > 0) {
   graph$nodes_df = graph$nodes_df %>%
-    dplyr::left_join(special_operations, by = "id") %>%
+    dplyr::left_join(rhs_R_select_operation, by = "id") %>%
     dplyr::mutate(rhs = ifelse(is.na(padded), rhs, padded)) %>%
     dplyr::select(-padded)
+  }
+  
+  ## merge rhs_R_matrix_operation back to nodes_df
+  if (length_matrix_op > 0) {
+    graph$nodes_df = graph$nodes_df %>%
+      dplyr::left_join(rhs_R_matrix_operation, by = "id") %>%
+      dplyr::mutate(rhs = ifelse(is.na(padded), rhs, padded)) %>%
+      dplyr::select(-padded)
+  }
+  
+  ## merge rhs_R_combine_operation back to nodes_df
+  if (length_combine_op > 0) {
+    graph$nodes_df = graph$nodes_df %>%
+      dplyr::left_join(rhs_R_combine_operation, by = "id") %>%
+      dplyr::mutate(rhs = ifelse(is.na(padded), rhs, padded)) %>%
+      dplyr::select(-padded)
+  }
   
   
   ## update auto_rhs column
