@@ -12,6 +12,9 @@ library(JuliaCall)
 ## initial setup, need to provide JULIA_HOME
 julia <- julia_setup(JULIA_HOME="/Applications/Julia-1.1.app/Contents/Resources/julia/bin/")
 
+#or 
+julia <- julia_setup()
+
 ## include Julia package, need to install these packages in Julia first
 julia_library(pkg_name = "Turing")
 julia_library(pkg_name = "MCMCChains")
@@ -19,7 +22,7 @@ julia_library(pkg_name = "Distributions")
 julia_library(pkg_name = "DataFrames")
 julia_library(pkg_name = "StatsFuns")
 julia_library(pkg_name = "DynamicHMC")
-julia_library(pkg_name = "RCall")
+
 
 
 library(causact)
