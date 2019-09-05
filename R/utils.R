@@ -439,33 +439,28 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::mutate(ncol = as.numeric(stringr::str_replace_all(ncol, c("ncol?[:space:]= ?[:space:]" = "")))) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(length_number = stringr::str_count(numbers, pattern = " ") + 1) %>% # length of number
-    dplyr::mutate(ncol = ifelse(is.na(ncol), length_number/nrow, ncol)) # calculate number of col of matrix if users did not supply
+    dplyr::mutate(ncol = ifelse(is.na(ncol), length_number/nrow, ncol)) %>% # calculate number of col of matrix if users did not supply
+    dplyr::mutate(padded = NA)
   
   
   if(nrow(rhs_R_matrix_operation) > 0) {
-    padded = NULL
   for (j in 1:nrow(rhs_R_matrix_operation)) { 
-    padded[j] = "["
+    rhs_R_matrix_operation$padded[j] = "["
     
     for (i in 1:rhs_R_matrix_operation$length_number[j]) {
       if( (i %% rhs_R_matrix_operation$ncol[j]) != 0 & i != rhs_R_matrix_operation$length_number[j]){
-        padded[j] =  paste0(padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], " ") # if not the end of column pad " "
+        rhs_R_matrix_operation$padded[j] =  paste0(rhs_R_matrix_operation$padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], " ") # if not the end of column pad " "
       } else if( (i %% rhs_R_matrix_operation$ncol[j]) == 0 & i != rhs_R_matrix_operation$length_number[j]) {
-        padded[j] =  paste0(padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], ";") # if the end of column pad ";"
+        rhs_R_matrix_operation$padded[j] =  paste0(rhs_R_matrix_operation$padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], ";") # if the end of column pad ";"
       } else if(i == rhs_R_matrix_operation$length_number[j]) {
-        padded[j] =  paste0(padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], "]") # if the end of matrix pad "]"
+        rhs_R_matrix_operation$padded[j] =  paste0(rhs_R_matrix_operation$padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], "]") # if the end of matrix pad "]"
       }
     }
   }
-    padded = data.frame(padded) # change to data frame
-    
-    rhs_R_matrix_operation = rhs_R_matrix_operation %>%
-      cbind(padded) %>% # merge back to rhs_R_matrix_operation
-      dplyr::select(id, padded) 
   }
   
-  
-  
+  rhs_R_matrix_operation = rhs_R_matrix_operation %>%
+    dplyr::select(id, padded) 
   
   ### combine operation: {c(), cbind(), rbind()}
   rhs_R_combine_operation = graph$nodes_df %>%
