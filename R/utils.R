@@ -402,10 +402,10 @@ juliaRhsOperationComposition = function(graph) {
                 "diag" = "Diagonal")
   
   
-  #### insert indicator 1/0 for special R operation: {matrix(), c(), cbind(), rbind()} that need to be changed to Julia objects using RCall package: @rput and rcopy
+  #### insert indicator 1/0 for special R operation: {c(), cbind(), rbind()} that need to be changed to Julia objects using RCall package: @rput and rcopy
   
   graph$nodes_df = graph$nodes_df %>%
-    dplyr::mutate(needRpadded = stringr::str_extract(rhs, c("matrix\\(.*\\)|cbind\\(.*\\)|rbind\\(.*\\)|c\\(.*\\)"))) %>%
+    dplyr::mutate(needRpadded = stringr::str_extract(rhs, c("cbind\\(.*\\)|rbind\\(.*\\)|^c\\(.*\\)"))) %>%
     dplyr::mutate(RpaddedIndicator = ifelse(is.na(needRpadded), 0, 1)) %>%
     dplyr::select(-needRpadded)
   
@@ -423,19 +423,58 @@ juliaRhsOperationComposition = function(graph) {
                                                                    ", \\]" = ",\\:\\]"))) %>%
     dplyr::select(id, padded)
   
+  ### Matrix(c(), nrow = , ncol = ) operation
+  rhs_R_matrix_operation = graph$nodes_df %>%
+    dplyr::mutate(needRpadded = stringr::str_extract(rhs, "matrix\\(.*\\)")) %>%
+    dplyr::filter(!is.na(needRpadded)) %>%
+    dplyr::select(id, label, needRpadded) %>%
+    dplyr::mutate(numbers = stringr::str_extract(needRpadded, c("c\\(.*\\),|c\\(.*\\)\\)"))) %>% # extract c()
+    dplyr::mutate(numbers = stringr::str_replace_all(numbers, c("c\\(" = "",
+                                                                "\\)," = "",
+                                                                "\\)\\)" = "",
+                                                                "," = ""))) %>% # extract numbers in c()
+    dplyr::mutate(nrow = stringr::str_extract(needRpadded, "nrow?[:space:]=?[:space:][:digit:]")) %>%
+    dplyr::mutate(nrow = as.numeric(stringr::str_replace_all(nrow, c("nrow?[:space:]= ?[:space:]" = "")))) %>%
+    dplyr::mutate(ncol = stringr::str_extract(needRpadded, "ncol?[:space:]=?[:space:][:digit:]")) %>%
+    dplyr::mutate(ncol = as.numeric(stringr::str_replace_all(ncol, c("ncol?[:space:]= ?[:space:]" = "")))) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(length_number = stringr::str_count(numbers, pattern = " ") + 1) %>% # length of number
+    dplyr::mutate(ncol = ifelse(is.na(ncol), length_number/nrow, ncol)) # calculate number of col of matrix if users did not supply
   
-  ### combine operation: {matrix(), c(), cbind(), rbind()}
+  padded = NULL
+  for (j in 1:nrow(rhs_R_matrix_operation)) { 
+    padded[j] = "["
+    
+    for (i in 1:rhs_R_matrix_operation$length_number[j]) {
+      if( (i %% rhs_R_matrix_operation$ncol[j]) != 0 & i != rhs_R_matrix_operation$length_number[j]){
+        padded[j] =  paste0(padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], " ") # if not the end of column pad " "
+      } else if( (i %% rhs_R_matrix_operation$ncol[j]) == 0 & i != rhs_R_matrix_operation$length_number[j]) {
+        padded[j] =  paste0(padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], ";") # if the end of column pad ";"
+      } else if(i == rhs_R_matrix_operation$length_number[j]) {
+        padded[j] =  paste0(padded[j], str_split(rhs_R_matrix_operation$numbers[j], pattern = " ")[[1]][i], "]") # if the end of matrix pad "]"
+      }
+    }
+  }
+  
+  padded = data.frame(padded) # change to data frame
+  
+  rhs_R_matrix_operation = rhs_R_matrix_operation %>%
+    cbind(padded) %>% # merge back to rhs_R_matrix_operation
+    dplyr::select(id, padded)
+  
+  
+  ### combine operation: {c(), cbind(), rbind()}
   rhs_R_combine_operation = graph$nodes_df %>%
-    dplyr::mutate(needRpadded = stringr::str_extract(rhs, c("matrix\\(.*\\)|cbind\\(.*\\)|rbind\\(.*\\)|c\\(.*\\)"))) %>%
+    dplyr::mutate(needRpadded = stringr::str_extract(rhs, c("cbind\\(.*\\)|rbind\\(.*\\)|^c\\(.*\\)"))) %>%
     dplyr::filter(!is.na(needRpadded)) %>%
     dplyr::select(id, label, needRpadded) %>%
     dplyr::left_join(graph$edges_df[,c(2,3)], c("id" = "to")) %>%
-    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0(label, " = rcopy(R\\\"", needRpadded, "\\\") "))) %>%
+    dplyr::mutate(padded = ifelse(!is.na(from), NA, paste0(label, " = rcopy(R\"", needRpadded, "\") "))) %>%
     dplyr::left_join(graph$nodes_df[,c(1,2)], c("from" = "id")) %>%
     dplyr::group_by(id) %>%
     dplyr::mutate(parent = paste(label.y, collapse=" ")) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\\\"",label.x, " = ", needRpadded,"\\\")"))) %>%
+    dplyr::mutate(padded = ifelse(!is.na(padded), padded, paste0("@rput ", parent, " \n ", label.x, " = rcopy(R\"",label.x, " = ", needRpadded,"\")"))) %>%
     dplyr::distinct(id, padded)
   
   ## replace the input rhs into pointWise rhs
@@ -446,7 +485,8 @@ juliaRhsOperationComposition = function(graph) {
   
   ## combine the R operation DFs
   special_operations = rhs_R_select_operation %>%
-    dplyr::full_join(rhs_R_combine_operation)
+    dplyr::full_join(rhs_R_combine_operation) %>%
+    dplyr::full_join(rhs_R_matrix_operation)
   
   ## merge back to nodes_df
   graph$nodes_df = graph$nodes_df %>%
