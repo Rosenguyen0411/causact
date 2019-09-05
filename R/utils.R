@@ -441,8 +441,9 @@ juliaRhsOperationComposition = function(graph) {
     dplyr::mutate(length_number = stringr::str_count(numbers, pattern = " ") + 1) %>% # length of number
     dplyr::mutate(ncol = ifelse(is.na(ncol), length_number/nrow, ncol)) # calculate number of col of matrix if users did not supply
   
-  padded = NULL
+  
   if(nrow(rhs_R_matrix_operation) > 0) {
+    padded = NULL
   for (j in 1:nrow(rhs_R_matrix_operation)) { 
     padded[j] = "["
     
@@ -456,13 +457,14 @@ juliaRhsOperationComposition = function(graph) {
       }
     }
   }
+    padded = data.frame(padded) # change to data frame
+    
+    rhs_R_matrix_operation = rhs_R_matrix_operation %>%
+      cbind(padded) %>% # merge back to rhs_R_matrix_operation
+      dplyr::select(id, padded) 
   }
   
-  padded = data.frame(padded) # change to data frame
   
-  rhs_R_matrix_operation = rhs_R_matrix_operation %>%
-    cbind(padded) %>% # merge back to rhs_R_matrix_operation
-    dplyr::select(id, padded)
   
   
   ### combine operation: {c(), cbind(), rbind()}
