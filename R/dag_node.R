@@ -157,18 +157,18 @@ dag_node <- function(graph,
   if(!is.na(rhsID)) {graph$arg_df = dplyr::bind_rows(graph$arg_df,argDF)}
 
   ## add edges for newly added nodes with non-na children
-  #conditionExpr = rlang::enexpr(condition)
+  conditionExpr = rlang::enexpr(condition)
   
   edgeDF = ndf %>% dplyr::filter(!is.na(child))
   if(!is.na(child[1]) & length(child) > 0) {
     fromVector = edgeDF$id
     toVector = child  ## use vector of child names not string
     if(is.na(extract)) {
-      graph = graph %>% dag_edge(fromVector,toVector, condition = condition)
+      graph = graph %>% dag_edge(fromVector,toVector, condition = rlang::quo_name(conditionExpr))
   } else if(extract == TRUE) {
-    graph = graph %>% dag_edge(fromVector,toVector, type = "extract", condition = condition)
+    graph = graph %>% dag_edge(fromVector,toVector, type = "extract", condition = rlang::quo_name(conditionExpr))
   } else {
-    graph = graph %>% dag_edge(fromVector,toVector, type = "solid", condition = condition)
+    graph = graph %>% dag_edge(fromVector,toVector, type = "solid", condition = rlang::quo_name(conditionExpr))
   }
   }
 
