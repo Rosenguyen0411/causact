@@ -164,11 +164,11 @@ dag_node <- function(graph,
     fromVector = edgeDF$id
     toVector = child  ## use vector of child names not string
     if(is.na(extract)) {
-      graph = graph %>% dag_edge(fromVector,toVector, condition = rlang::quo_name(conditionExpr))
+      graph = graph %>% dag_edge(fromVector,toVector, condition = rlang::eval_tidy(conditionExpr))
   } else if(extract == TRUE) {
-    graph = graph %>% dag_edge(fromVector,toVector, type = "extract", condition = rlang::quo_name(conditionExpr))
+    graph = graph %>% dag_edge(fromVector,toVector, type = "extract", condition = rlang::eval_tidy(conditionExpr))
   } else {
-    graph = graph %>% dag_edge(fromVector,toVector, type = "solid", condition = rlang::quo_name(conditionExpr))
+    graph = graph %>% dag_edge(fromVector,toVector, type = "solid", condition = rlang::eval_tidy(conditionExpr))
   }
   }
 
