@@ -152,7 +152,8 @@ dag_diagrammer = function(graph, wrapWidth = 24, shortLabel = FALSE) {
       tidyr::replace_na("solid")
     edgeDF = DiagrammeR::create_edge_df(from = edgeDF$from,
                                         to = edgeDF$to,
-                                        style = edgeDF$style)
+                                        style = edgeDF$style,
+                                        rel = edgeDF$condition) # Rose: add label = condition
     dgr_graph =  dgr_graph %>% DiagrammeR::add_edge_df(edgeDF)
   }
 

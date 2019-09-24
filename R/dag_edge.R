@@ -17,6 +17,7 @@
 dag_edge <- function(graph,
                      from,
                      to,
+                     condition = as.character(NA), # Rose: Condition on parent
                      type = as.character(NA)) {
 
   ## get number of edges
@@ -34,6 +35,7 @@ dag_edge <- function(graph,
     id = edgeIDstart:(edgeIDstart+numberOfEdges-1),
     from = fromIDs,
     to = toIDs,
+    condition = condition, # Rose: Condition on parent
     type = type,
     stringsAsFactors = FALSE
   )
