@@ -157,7 +157,7 @@ dag_node <- function(graph,
   if(!is.na(rhsID)) {graph$arg_df = dplyr::bind_rows(graph$arg_df,argDF)}
 
   ## add edges for newly added nodes with non-na children
-  conditionExpr = rlang::enexpr(condition)
+  conditionExpr = rlang::enquo(condition)
   
   edgeDF = ndf %>% dplyr::filter(!is.na(child))
   if(!is.na(child[1]) & length(child) > 0) {
