@@ -30,7 +30,7 @@ dag_edge <- function(graph,
   toIDs = findNodeID(graph,to)
   
   ## paste condition together
-  if (!is.na(condition) & length(condition) > 0) {
+  if (!is.na(condition[1]) & length(condition) > 0) {
     edge_label = NULL
     for (i in 1:length(condition)) {
       edge_label = c(edge_label, condition[i])
@@ -44,7 +44,7 @@ dag_edge <- function(graph,
     id = edgeIDstart:(edgeIDstart+numberOfEdges-1),
     from = fromIDs,
     to = toIDs,
-    edge_label = edge_label, # Rose: Condition on parent
+    edge_label = as.string(edge_label), # Rose: Condition on parent
     type = type,
     stringsAsFactors = FALSE
   )

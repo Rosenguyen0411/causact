@@ -162,3 +162,5 @@ dag_diagrammer = function(graph, wrapWidth = 24, shortLabel = FALSE) {
 
   return(dgr_graph)
 }
+
+
