@@ -28,6 +28,9 @@ dag_edge <- function(graph,
   ## extract nodeIDs
   fromIDs = findNodeID(graph,from)
   toIDs = findNodeID(graph,to)
+  
+  ## paste condition together
+  condition = paste0("c(", condition, ")")
 
   ## initialize edgeDF info for this edge(s)
   edgeIDstart = max(graph$edges_df$id,0) + 1
