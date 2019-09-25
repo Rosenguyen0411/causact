@@ -32,7 +32,7 @@ dag_edge <- function(graph,
 
   
   ## Rose: if condition is provided, put condition in the correct edge
-  edge_label = NULL
+  edge_label = condition
   
   if (!is.na(condition[1]) & length(condition) > 0) {
     for (i in 1:length(condition)) {
