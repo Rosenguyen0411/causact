@@ -163,19 +163,36 @@ dag_node <- function(graph,
   
   edgeDF = ndf %>% dplyr::filter(!is.na(child))
   
-  
+  # if condition is provided
   if(!is.na(child[1]) & length(child) > 0) {
     fromVector = edgeDF$id
     toVector = child  ## use vector of child names not string
-    #condition = edgeDF$condition
-    if(is.na(extract)) {
+    
+    #if condition is provided
+    if (!is.na(condition[1]) & length(condition) > 0) {
+      if(is.na(extract)) {
       graph = graph %>% dag_edge(fromVector,toVector, condition = condition)
-  } else if(extract == TRUE) {
-    graph = graph %>% dag_edge(fromVector,toVector, type = "extract", condition = condition)
-  } else {
-    graph = graph %>% dag_edge(fromVector,toVector, type = "solid", condition = condition)
+      } else if(extract == TRUE) {
+        graph = graph %>% dag_edge(fromVector,toVector, type = "extract", condition = condition)
+        } else {
+          graph = graph %>% dag_edge(fromVector,toVector, type = "solid", condition = condition)
+          }
+    } 
+    
+    # if condition is not provided
+    if (is.na(condition[1])) {
+        if(is.na(extract)) {
+          graph = graph %>% dag_edge(fromVector,toVector)
+        } else if(extract == TRUE) {
+          graph = graph %>% dag_edge(fromVector,toVector, type = "extract")
+        } else {
+          graph = graph %>% dag_edge(fromVector,toVector, type = "solid")
+        }
+      }
   }
-  }
+  
+  # if condition is not provided
+  
 
   ### update labels for plotting
   graph = autoLabel(graph)
