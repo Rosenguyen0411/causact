@@ -44,7 +44,7 @@ dag_edge <- function(graph,
     id = edgeIDstart:(edgeIDstart+numberOfEdges-1),
     from = fromIDs,
     to = toIDs,
-    edge_label = as.string(edge_label), # Rose: Condition on parent
+    edge_label = rlang::as_string(edge_label), # Rose: Condition on parent
     type = type,
     stringsAsFactors = FALSE
   )
