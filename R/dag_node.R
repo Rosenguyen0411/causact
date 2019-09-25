@@ -145,7 +145,7 @@ dag_node <- function(graph,
       rhs = rhsString,
       child = childString, ##store string of child names
       data = dataString,
-      condition = conditionExpr, # Rose: Condition on parent
+      conditionExpr = conditionExpr, # Rose: Condition on parent
       #distr or formula
       obs = obs,
       rhsID = rhsID,
@@ -167,7 +167,7 @@ dag_node <- function(graph,
   if(!is.na(child[1]) & length(child) > 0) {
     fromVector = edgeDF$id
     toVector = child  ## use vector of child names not string
-    condition = edgeDF$condition
+    #condition = edgeDF$condition
     if(is.na(extract)) {
       graph = graph %>% dag_edge(fromVector,toVector, condition = condition)
   } else if(extract == TRUE) {

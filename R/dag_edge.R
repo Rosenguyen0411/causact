@@ -17,7 +17,7 @@
 dag_edge <- function(graph,
                      from,
                      to,
-                     condition = as.character(NA), # Rose: Condition on parent
+                     condition, # Rose: Condition on parent
                      type = as.character(NA)) {
 
   ## get number of edges
@@ -30,7 +30,13 @@ dag_edge <- function(graph,
   toIDs = findNodeID(graph,to)
   
   ## paste condition together
-  condition = paste0("c(", condition, ")")
+  if (!is.na(condition) & length(condition) > 0) {
+    edge_label = NULL
+    for (i in 1:length(condition)) {
+      edge_label = c(edge_label, condition[i])
+    }
+  }
+ 
 
   ## initialize edgeDF info for this edge(s)
   edgeIDstart = max(graph$edges_df$id,0) + 1
@@ -38,7 +44,7 @@ dag_edge <- function(graph,
     id = edgeIDstart:(edgeIDstart+numberOfEdges-1),
     from = fromIDs,
     to = toIDs,
-    condition = condition, # Rose: Condition on parent
+    edge_label = edge_label, # Rose: Condition on parent
     type = type,
     stringsAsFactors = FALSE
   )

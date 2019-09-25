@@ -52,7 +52,7 @@ dag_create <- function() {
       from = as.integer(NA),
       to = as.integer(NA),
       type = as.character(NA),
-      condition = as.character(NA), # Rose: Condition on parent
+      edge_label = as.character(NA), # Rose: Condition on parent
       stringsAsFactors = FALSE
     )[-1, ]
 
