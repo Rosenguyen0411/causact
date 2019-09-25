@@ -29,9 +29,10 @@ dag_edge <- function(graph,
   fromIDs = findNodeID(graph,from)
   toIDs = findNodeID(graph,to)
   
-  ## paste condition together
+  edge_label = NA
+  
+  ## Rose: if condition is provided, put condition in the correct edge
   if (!is.na(condition[1]) & length(condition) > 0) {
-    edge_label = NULL
     for (i in 1:length(condition)) {
       edge_label = c(edge_label, rlang::as_string(condition[i]))
     }
